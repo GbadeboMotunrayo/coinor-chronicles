@@ -1,84 +1,200 @@
-# CoinorChronicles ⚔️
-## The Realm of Coinor · Journey to the Golden Gate
+# Coinor Chronicles
 
-> *"Sit, young Pepe. Let me tell you what the markets whispered today."*
-> — Aragorn (Bitcoin), Episode 1
-
----
-
-**CoinorChronicles** is a fully automated AI media empire that transforms real-time cryptocurrency market data into an unfolding epic fantasy saga — published daily to [coinorchronicles.com](https://coinorchronicles.com), YouTube, and TikTok.
-
-Every 6 hours, the system wakes. It reads live prices. It consults this style guide. It writes a story. It publishes it. No human touches a keyboard.
+> *AI-generated crypto-fantasy media empire.*
+> Cryptocurrency prices told as a Lord of the Rings epic saga — every 6 hours, forever.
 
 ---
 
-## The World
+## What this is
 
-The **Realm of Coinor** is an ancient land where travelers — each a real cryptocurrency — pursue their **Golden Gates**: price milestones that mark ascension to a new level of power. Between each Gate lie **10 Heavens**. The journey is infinite. New Gates always appear beyond the last.
+**Coinor Chronicles** maps 21 crypto coins to LOTR characters. Price moves become battles, milestones become Gates, and the 10 Heavens between each Gate mark the journey's progress. No mention of "crypto", "price", or "market" — only provisions, gold units, the road, and the siege.
 
-**Bitcoin is Aragorn.** He has reached the First Golden Gate of $100,000, was driven back by market wars, and now fights to reclaim his throne.
-
-**Ethereum is Gandalf.** Solana is Legolas. SHIB is Merry. DOGE is Pippin. LUNC is Denethor — the warning every bear market tells.
-
-**The website IS the Book of Meme** — the living chronicle of every story ever told, tended by Bilbo Baggins (BOME).
-
-## The Style Guide
-
-Every AI-generated story begins by reading this repository. These are the laws:
-
-| Document | Purpose |
-|---|---|
-| [docs/WORLD_BIBLE.md](docs/WORLD_BIBLE.md) | The full lore of the Realm of Coinor |
-| [docs/CHARACTER_VOICES.md](docs/CHARACTER_VOICES.md) | Voice sheets for all 21 characters |
-| [docs/EXTERNAL_REALMS.md](docs/EXTERNAL_REALMS.md) | Translation table — real world → Coinor |
-| [docs/COSMOLOGY.md](docs/COSMOLOGY.md) | Golden Gates + 10 Heavens system |
-| [prompts/script_generator.md](prompts/script_generator.md) | Story generation prompt |
-| [prompts/review_agent.md](prompts/review_agent.md) | Quality gate — checks every script |
-| [prompts/celebration_episode.md](prompts/celebration_episode.md) | Milestone episode prompt |
-
-## The Characters
-
-21 named LOTR characters, each mapped to a real coin with narrative logic:
-
-**Clan of the Ancients · The Obsidian Citadel**
-Aragorn (BTC) · Gandalf (ETH) · Samwise (LTC) · Elrond (BNB) · Boromir (XRP)
-
-**Clan of the Swift · The Electric Plains**
-Legolas (SOL) · Eomer (TON) · Eowyn (AVAX) · Faramir (XLM) · Saruman (TRX)
-
-**Clan of Meme Lords · Kekiston Bazaar**
-Tom Bombadil (PEPE) · Merry (SHIB) · Pippin (DOGE) · Theoden (FLOKI) · Frodo (NOT) · Bilbo (BOME) · Gollum (BONK)
-
-**Clan of the Builders · The Forge of Chains**
-Treebeard (ADA) · Gimli (SUI) · Galadriel (JASMY) · + more
-
-**The Fallen:** Denethor (LUNC) — no clan, legend and warning.
-
-## The Tech Stack
-
-| Layer | Tool | Cost |
-|---|---|---|
-| Hosting | Hostinger Shared | Already owned |
-| Pipeline | PHP + Cron Jobs | Free |
-| Database | MySQL | Free (Hostinger) |
-| AI / Story | Anthropic Claude API | ~$1–2/mo |
-| Voice (Phase 2) | ElevenLabs | $5/mo |
-| Prices | CoinGecko API | Free |
-| Video (Phase 2) | FFmpeg + VPS | ~$7/mo |
-| Publishing | YouTube + TikTok API | Free |
-
-**Total Phase 1: ~$3–5/month**
-
-## The Revenue Model
-
-1. **Community Donations** — Every 20th story, Aragorn speaks. Fellowship Contribution Scrolls appear.
-2. **YouTube AdSense** — 4 videos/day accelerates watch hours dramatically
-3. **Merchandise** — Realm Cards, clan badges, Pepe figures (Printful + Shopify)
-4. **Sponsorships** — Named guild sponsorships in Coinor language (Bybit, Binance)
-5. **Workflow Product** — The system itself sold to other creators
-6. **The Token** — $COINOR or $GATE. When the community demands it.
+| Character | Coin | Clan |
+|-----------|------|------|
+| Aragorn | BTC | Ancients |
+| Gandalf | ETH | Ancients |
+| Legolas | SOL | Swift |
+| Boromir | XRP | Ancients |
+| Samwise | LTC | Ancients |
+| Elrond | BNB | Ancients |
+| Merry | SHIB | Meme Lords |
+| Pippin | DOGE | Meme Lords |
+| Tom Bombadil | PEPE | Meme Lords |
+| Frodo | NOT | Meme Lords |
+| Bilbo | BOME | Meme Lords |
+| Gollum | BONK | Meme Lords |
+| Theoden | FLOKI | Meme Lords |
+| Treebeard | ADA | Builders |
+| Gimli | SUI | Builders |
+| Galadriel | JASMY | Builders |
+| Eowyn | AVAX | Swift |
+| Faramir | XLM | Swift |
+| Saruman | TRX | Swift |
+| Eomer | TON | Swift |
+| Denethor | UNI | Builders |
 
 ---
 
-## Built by GbadeboMotunrayo · May 2026
-*The journey continues.*
+## Tech stack
+
+| Layer | Choice |
+|-------|--------|
+| Frontend | Pure HTML/CSS/JS (no framework) |
+| Backend | PHP 8+ / MySQL on Hostinger VPS |
+| Animations | GSAP 3.12.5 |
+| AI pipeline | Python 3.11+ + Anthropic API |
+| Price data | CoinGecko free API |
+
+---
+
+## Directory layout
+
+```
+coinor-chronicles/
+├── website/                 ← Deploy this folder to public_html/
+│   ├── index.html           ← Landing page
+│   ├── chronicle.php        ← Episode archive (paginated)
+│   ├── story.php            ← Single episode reader
+│   ├── the-fellowship.php   ← All 21 companions
+│   ├── lore.html            ← World bible & cosmology
+│   ├── 404.php              ← Custom error page
+│   ├── schema.sql           ← Run once on MySQL
+│   ├── .htaccess            ← Security + rewrites + caching
+│   ├── api/
+│   │   └── subscribe.php    ← Email subscribe endpoint
+│   ├── assets/
+│   │   ├── css/main.css
+│   │   └── images/          ← Add og-card.jpg here (1200×630)
+│   └── includes/
+│       ├── config.php       ← Env-based config
+│       ├── db.php           ← PDO helpers
+│       ├── header.php       ← Shared HTML head + nav
+│       └── footer.php       ← Shared footer + subscribe section
+├── python_scripts/          ← AI pipeline (runs on VPS via cron)
+│   ├── pipeline.py          ← Main orchestrator — run this
+│   ├── config.py            ← Reads env vars
+│   ├── fetch_prices.py      ← CoinGecko fetcher
+│   ├── heavens.py           ← Gate/Heaven calculator
+│   ├── generate_chronicle.py← Claude API story generator
+│   ├── db.py                ← MySQL helpers
+│   └── requirements.txt
+├── docs/                    ← Lore documents (read by AI pipeline)
+│   ├── WORLD_BIBLE.md
+│   ├── CHARACTER_VOICES.md
+│   ├── COSMOLOGY.md
+│   └── EXTERNAL_REALMS.md
+└── prompts/                 ← Prompt templates
+    ├── script_generator.md
+    ├── review_agent.md
+    └── celebration_episode.md
+```
+
+---
+
+## Hostinger VPS — first deployment
+
+### 1. Upload website files
+
+Upload the contents of `website/` to your `public_html/` directory via SFTP or hPanel File Manager.
+
+### 2. Create the MySQL database
+
+In hPanel → Databases → MySQL Databases:
+1. Create database: `coinor_chronicles`
+2. Create user and assign full privileges
+3. Import `website/schema.sql` via phpMyAdmin
+
+### 3. Configure PHP secrets
+
+Create `website/includes/config.local.php` on the server (never committed — blocked by `.gitignore` and `.htaccess`):
+
+```php
+<?php
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'coinor_chronicles');
+define('DB_USER', 'your_db_user');
+define('DB_PASS', 'your_db_password');
+define('CLAUDE_API_KEY', 'sk-ant-...');
+define('SITE_URL', 'https://coinorchronicles.com');
+```
+
+### 4. Install Python pipeline
+
+SSH into the VPS, then:
+
+```bash
+cd /home/YOUR_USER/coinor-chronicles
+pip3 install -r python_scripts/requirements.txt
+```
+
+Create a `.env` file in the repo root (gitignored):
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+DB_HOST=localhost
+DB_NAME=coinor_chronicles
+DB_USER=your_db_user
+DB_PASS=your_db_password
+```
+
+Test a single pipeline run:
+
+```bash
+python3 python_scripts/pipeline.py
+```
+
+### 5. Set up the cron job
+
+In hPanel → Advanced → Cron Jobs, add:
+
+```
+0 0,6,12,18 * * *   cd /home/YOUR_USER/coinor-chronicles && /usr/bin/python3 python_scripts/pipeline.py >> logs/pipeline.log 2>&1
+```
+
+Create the logs directory first:
+
+```bash
+mkdir -p logs
+```
+
+### 6. DNS + SSL
+
+In hPanel → DNS Zone, point `coinorchronicles.com` A record to your VPS IP.
+Enable the free SSL in hPanel → SSL. The `.htaccess` handles www → non-www and HTTP → HTTPS automatically.
+
+---
+
+## Local development
+
+```bash
+git clone https://github.com/GbadeboMotunrayo/coinor-chronicles.git
+cd coinor-chronicles
+
+# PHP config for local DB
+cp website/includes/config.php website/includes/config.local.php
+# Edit config.local.php with your local credentials
+
+# Python pipeline
+cd python_scripts
+pip install -r requirements.txt
+python pipeline.py
+```
+
+---
+
+## Creator overrides
+
+To steer the next episode, insert a row into `creator_control`:
+
+```sql
+INSERT INTO creator_control (target_clan, override_text, priority)
+VALUES ('meme_lords', 'Gollum must confront Frodo about the Precious at the summit of the Third Heaven.', 10);
+```
+
+The pipeline picks it up on the next run and marks it used.
+
+---
+
+## License
+
+Story content is original creative work. Code is MIT.

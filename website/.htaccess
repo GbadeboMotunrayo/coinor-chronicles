@@ -49,6 +49,11 @@ RewriteRule ^(.+)/$ /$1 [R=301,L]
   ExpiresByType font/woff2                "access plus 1 year"
 </IfModule>
 
+# ── Custom error pages ───────────────────────────────────
+ErrorDocument 404 /404.php
+ErrorDocument 403 /404.php
+ErrorDocument 500 /404.php
+
 # ── PHP settings ─────────────────────────────────────────
 <IfModule mod_php8.c>
   php_flag display_errors Off
