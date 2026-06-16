@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Coinor Chronicles — where cryptocurrency prices become an eternal fantasy saga. Twenty-one companions. One quest. Updated every six hours."/>
+  <meta name="theme-color" content="#0d0c0a"/>
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website"/>
+  <meta property="og:site_name"   content="Coinor Chronicles"/>
+  <meta property="og:title"       content="Coinor Chronicles — The Realm Awaits"/>
+  <meta property="og:description" content="The daily epic saga of the Realm of Coinor. Twenty-one companions. One eternal quest."/>
+  <meta property="og:url"         content="https://coinorchronicles.com"/>
+  <meta property="og:image"       content="https://coinorchronicles.com/assets/images/og-card.jpg"/>
+  <meta name="twitter:card"       content="summary_large_image"/>
+
+  <link rel="canonical" href="https://coinorchronicles.com"/>
+  <title>Coinor Chronicles — The Realm Awaits</title>
+
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com"/>
+  <link rel="stylesheet" href="/assets/css/main.css"/>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+
+  <style>
+    /* ── HERO ───────────────────────────────────────────── */
+    #hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 60%, #1d1708 0%, #0d0c0a 65%);
+    }
+
+    #hero-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+
+    .hero-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 85% 80% at 50% 50%, transparent 35%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.65rem;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0;
+      margin-bottom: 1.2rem;
+    }
+
+    #hero h1 {
+      font-size: clamp(2.8rem, 8vw, 6.5rem);
+      color: var(--gold);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      line-height: 1.0;
+      text-shadow: 0 0 80px rgba(201,168,76,0.45), 0 0 160px rgba(201,168,76,0.15);
+      opacity: 0;
+    }
+
+    .hero-sub {
+      margin-top: 1.2rem;
+      font-size: clamp(1rem, 2.2vw, 1.3rem);
+      color: var(--cream);
+      opacity: 0;
+      letter-spacing: 0.12em;
+      font-style: italic;
+    }
+
+    .hero-divider {
+      width: 90px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 1.8rem auto;
+      opacity: 0;
+    }
+
+    .hero-desc {
+      font-size: clamp(0.88rem, 1.6vw, 1.05rem);
+      color: var(--cream-dim);
+      max-width: 500px;
+      line-height: 1.8;
+      opacity: 0;
+    }
+
+    .hero-cta-row {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2.2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.2rem; left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0;
+      animation: scrollPulse 2.4s ease-in-out infinite;
+      z-index: 2;
+      white-space: nowrap;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.2; transform: translateX(-50%) translateY(0); }
+      50%       { opacity: 0.65; transform: translateX(-50%) translateY(7px); }
+    }
+
+    /* ── STATS ──────────────────────────────────────────── */
+    #stats {
+      background: var(--dark-mid);
+      padding: 3.5rem 2rem;
+      border-top: 1px solid rgba(201,168,76,0.07);
+      border-bottom: 1px solid rgba(201,168,76,0.07);
+    }
+
+    .stats-grid {
+      display: flex;
+      justify-content: center;
+      gap: clamp(2rem, 6vw, 6rem);
+      flex-wrap: wrap;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      color: var(--gold);
+      line-height: 1;
+      display: block;
+      text-shadow: 0 0 30px rgba(201,168,76,0.3);
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      opacity: 0.5;
+      margin-top: 0.4rem;
+    }
+
+    /* ── CHAPTER 1 ──────────────────────────────────────── */
+    #ch1 .chapter-scene {
+      background: radial-gradient(ellipse at 30% 50%, #2a1f0e 0%, #0a0806 100%);
+    }
+
+    .ch1-inner {
+      display: flex;
+      align-items: center;
+      gap: clamp(2rem, 6vw, 7rem);
+      padding: 2rem;
+      max-width: 1100px;
+      width: 100%;
+    }
+
+    .aragorn-portrait {
+      flex: 0 0 auto;
+      width: clamp(150px, 22vw, 300px);
+      height: clamp(188px, 28vw, 375px);
+      border: 1.5px solid rgba(201,168,76,0.45);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(201,168,76,0.18), inset 0 0 40px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateX(-60px);
+    }
+
+    .aragorn-portrait svg { width: 100%; height: 100%; }
+
+    .ch1-text {
+      flex: 1;
+      opacity: 0;
+      transform: translateX(60px);
+    }
+
+    .ch1-text h2 {
+      font-size: clamp(1.8rem, 4vw, 3.6rem);
+      color: var(--gold);
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .ch1-text p {
+      font-size: clamp(0.92rem, 1.6vw, 1.1rem);
+      line-height: 1.9;
+      color: var(--cream);
+      opacity: 0.82;
+      max-width: 500px;
+    }
+
+    .ch1-text .elvish {
+      margin-top: 1.5rem;
+      font-style: italic;
+      color: var(--gold);
+      opacity: 0.6;
+      font-size: 0.95rem;
+      letter-spacing: 0.06em;
+      border-left: 2px solid rgba(201,168,76,0.28);
+      padding-left: 1rem;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+      .ch1-inner { flex-direction: column; text-align: center; }
+      .ch1-text p { max-width: 100%; }
+      .ch1-text .elvish { border-left: none; border-top: 1px solid rgba(201,168,76,0.28); padding-left: 0; padding-top: 1rem; }
+    }
+
+    /* ── CHAPTER 2 — MAP ────────────────────────────────── */
+    #ch2 .chapter-scene { background: #0a0d0b; }
+
+    .ch2-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      max-width: 900px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .ch2-title { opacity: 0; transform: translateY(-30px); }
+    .ch2-title h2 { font-size: clamp(1.5rem, 3.5vw, 2.8rem); color: var(--gold); margin-bottom: 0.4rem; }
+    .ch2-title p  { font-size: clamp(0.85rem, 1.5vw, 1rem); opacity: 0.55; letter-spacing: 0.06em; }
+
+    .map-svg-wrap  { width: 100%; max-width: 740px; opacity: 0; transform: scale(0.9); }
+
+    .map-route {
+      fill: none; stroke: var(--gold); stroke-width: 2;
+      stroke-linecap: round;
+      stroke-dasharray: 1300;
+      stroke-dashoffset: 1300;
+      filter: drop-shadow(0 0 6px rgba(201,168,76,0.55));
+    }
+
+    .map-node { opacity: 0; transform-origin: center; }
+    .map-node circle { fill: var(--accent); stroke: var(--gold); stroke-width: 1.5; }
+    .map-node text   { fill: var(--cream); font-size: 10px; font-family: Georgia,serif; dominant-baseline: middle; }
+
+    /* ── CHAPTER 3 — THE HEAVENS ────────────────────────── */
+    #ch3 .chapter-scene { background: linear-gradient(180deg, #060810 0%, #0a0d1a 100%); }
+
+    .ch3-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1060px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .ch3-title { opacity: 0; transform: translateY(-30px); }
+    .ch3-title h2 { font-size: clamp(1.5rem, 3.5vw, 2.8rem); color: var(--blue-star); margin-bottom: 0.4rem; }
+    .ch3-title p  { font-size: clamp(0.85rem, 1.5vw, 1rem); opacity: 0.5; letter-spacing: 0.06em; }
+
+    .heaven-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem 1.1rem;
+      width: 100%;
+    }
+
+    .heaven-card {
+      background: rgba(10,13,26,0.85);
+      border: 1px solid rgba(168,196,255,0.15);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      min-width: 155px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(40px) scale(0.93);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .heaven-card:hover {
+      border-color: rgba(168,196,255,0.3);
+      box-shadow: 0 8px 30px rgba(10,13,26,0.6);
+    }
+
+    .heaven-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(168,196,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hc-constellation {
+      font-size: 0.58rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--blue-star); opacity: 0.6; margin-bottom: 0.3rem;
+    }
+    .hc-hero-name  { font-size: 0.98rem; font-weight: bold; color: #e8f0ff; margin-bottom: 0.45rem; }
+    .hc-position   { font-size: 0.72rem; color: var(--cream-dim); font-style: italic; margin-bottom: 0.5rem; line-height: 1.4; }
+    .hc-gold-weight{ font-size: 1.3rem; color: var(--blue-star); font-weight: bold; letter-spacing: 0.03em; }
+    .hc-movement   { font-size: 0.72rem; margin-top: 0.2rem; }
+    .hc-movement.up   { color: var(--green-up); }
+    .hc-movement.down { color: var(--red-down); }
+
+    .star-particle {
+      position: absolute; border-radius: 50%; background: white; opacity: 0; pointer-events: none;
+    }
+
+    /* ── CHAPTER 4 — CTA ────────────────────────────────── */
+    #ch4 .chapter-scene {
+      background: radial-gradient(ellipse at center, #1c0f05 0%, #0a0806 100%);
+    }
+
+    .ch4-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 680px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .ch4-crown {
+      opacity: 0;
+      transform: scale(0.4) rotate(-20deg);
+      font-size: clamp(3.5rem, 9vw, 6rem);
+      filter: drop-shadow(0 0 24px rgba(201,168,76,0.5));
+    }
+
+    .ch4-text { opacity: 0; transform: translateY(40px); }
+    .ch4-text h2 { font-size: clamp(1.8rem, 4vw, 3.2rem); color: var(--gold); line-height: 1.2; margin-bottom: 1rem; }
+    .ch4-text p  { font-size: clamp(0.92rem, 1.6vw, 1.1rem); opacity: 0.8; line-height: 1.9; max-width: 480px; margin: 0 auto; }
+
+    .cta-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .ch4-tagline {
+      opacity: 0;
+      font-style: italic;
+      font-size: clamp(0.85rem, 1.4vw, 0.95rem);
+      color: var(--gold);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── CINEMATIC OUTRO ────────────────────────────────── */
+    #cinematic-outro {
+      height: 50vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #0a0806 0%, var(--dark-mid) 100%);
+    }
+
+    /* ── LATEST CHRONICLE ───────────────────────────────── */
+    #latest-chronicle {
+      background: var(--dark-mid);
+      padding: 5rem 2rem 6rem;
+    }
+
+    .chronicle-feature {
+      max-width: 920px;
+      margin: 0 auto;
+      background: var(--mid);
+      border: 1px solid rgba(201,168,76,0.12);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 380px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .chronicle-feature:hover {
+      border-color: rgba(201,168,76,0.28);
+      box-shadow: 0 12px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(201,168,76,0.06);
+    }
+
+    .chronicle-visual {
+      background: radial-gradient(ellipse at 40% 50%, #2a1f0e 0%, #0d0a06 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 280px;
+    }
+
+    .chronicle-visual::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, transparent 55%, rgba(13,12,10,0.85) 100%);
+    }
+
+    .chronicle-episode-number {
+      font-size: 7rem;
+      color: rgba(201,168,76,0.055);
+      font-weight: bold;
+      letter-spacing: -0.05em;
+      position: absolute;
+      bottom: -1rem; right: 1rem;
+      line-height: 1;
+    }
+
+    .chronicle-clan-badge {
+      background: rgba(201,168,76,0.1);
+      border: 1px solid rgba(201,168,76,0.22);
+      border-radius: 100px;
+      padding: 0.4rem 1.1rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      z-index: 1;
+    }
+
+    .chronicle-body {
+      padding: 2.2rem 2rem 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .chronicle-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .chronicle-meta-date {
+      font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--cream-dim); opacity: 0.55;
+    }
+
+    .chronicle-meta-season {
+      font-size: 0.65rem; letter-spacing: 0.1em;
+      padding: 0.2rem 0.7rem;
+      border-radius: 100px;
+    }
+
+    .chronicle-meta-season.golden {
+      background: rgba(93,222,138,0.08); border: 1px solid rgba(93,222,138,0.22); color: var(--green-up);
+    }
+    .chronicle-meta-season.dark-siege {
+      background: rgba(224,93,93,0.08); border: 1px solid rgba(224,93,93,0.22); color: var(--red-down);
+    }
+
+    .chronicle-title {
+      font-size: clamp(1.1rem, 2.2vw, 1.65rem);
+      color: var(--cream);
+      line-height: 1.3;
+      margin-bottom: 1rem;
+    }
+
+    .chronicle-excerpt {
+      font-size: clamp(0.85rem, 1.4vw, 0.95rem);
+      line-height: 1.85;
+      color: var(--cream-dim);
+      opacity: 0.78;
+      flex: 1;
+    }
+
+    .chronicle-read-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      transition: gap var(--transition);
+    }
+
+    .chronicle-read-link:hover { gap: 0.9rem; }
+    .chronicle-read-link::after { content: '→'; }
+
+    .chronicle-archive-link {
+      text-align: center;
+      margin-top: 2.5rem;
+    }
+
+    .chronicle-archive-link a {
+      font-size: 0.78rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--cream-dim); opacity: 0.5;
+      border-bottom: 1px solid rgba(201,168,76,0.18); padding-bottom: 2px;
+      transition: color var(--transition), opacity var(--transition);
+    }
+    .chronicle-archive-link a:hover { color: var(--gold); opacity: 1; }
+
+    @media (max-width: 640px) {
+      .chronicle-feature { grid-template-columns: 1fr; }
+      .chronicle-visual  { min-height: 180px; }
+    }
+
+    /* ── FELLOWSHIP PREVIEW ─────────────────────────────── */
+    #the-fellowship {
+      background: var(--dark);
+      padding: 5rem 2rem 6rem;
+    }
+
+    .fellowship-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 1.2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .fellow-card {
+      background: var(--mid);
+      border: 1px solid rgba(201,168,76,0.09);
+      border-radius: var(--radius-lg);
+      padding: 1.6rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+    }
+
+    .fellow-card:hover {
+      border-color: rgba(201,168,76,0.25);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    .fellow-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    }
+
+    .fellow-card.clan-ancients::before  { background: linear-gradient(90deg, transparent, var(--clan-ancients), transparent); }
+    .fellow-card.clan-swift::before     { background: linear-gradient(90deg, transparent, var(--clan-swift), transparent); }
+    .fellow-card.clan-meme::before      { background: linear-gradient(90deg, transparent, var(--clan-meme), transparent); }
+    .fellow-card.clan-builders::before  { background: linear-gradient(90deg, transparent, var(--clan-builders), transparent); }
+
+    .fellow-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.9rem;
+    }
+
+    .fellow-portrait {
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(201,168,76,0.3);
+      background: var(--mid-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.35rem;
+    }
+
+    .fellow-name  { font-size: 1.08rem; color: var(--cream); margin-bottom: 0.12rem; }
+    .fellow-title { font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); opacity: 0.6; }
+
+    .fellow-position-badge {
+      font-size: 0.6rem; letter-spacing: 0.1em;
+      padding: 0.22rem 0.6rem;
+      border-radius: 100px;
+      border: 1px solid rgba(201,168,76,0.22);
+      color: var(--gold); background: rgba(201,168,76,0.06);
+      white-space: nowrap; flex-shrink: 0;
+    }
+
+    .fellow-lore {
+      font-size: 0.83rem; line-height: 1.72; color: var(--cream-dim); opacity: 0.72; margin-bottom: 1rem;
+    }
+
+    .fellow-quote {
+      font-style: italic; font-size: 0.8rem; color: var(--gold); opacity: 0.55;
+      border-top: 1px solid rgba(201,168,76,0.1); padding-top: 0.9rem; line-height: 1.6;
+    }
+
+    .fellowship-see-all { text-align: center; margin-top: 2.5rem; }
+    .fellowship-see-all a {
+      font-size: 0.78rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--cream-dim); opacity: 0.5;
+      border-bottom: 1px solid rgba(201,168,76,0.18); padding-bottom: 2px;
+      transition: color var(--transition), opacity var(--transition);
+    }
+    .fellowship-see-all a:hover { color: var(--gold); opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div id="progress-bar" role="progressbar" aria-hidden="true"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     NAVIGATION
+═══════════════════════════════════════════════════ -->
+<nav id="nav" role="navigation" aria-label="Main navigation">
+  <a href="/" class="nav-brand" aria-label="Coinor Chronicles home">
+    <span class="nav-brand-crown" aria-hidden="true">♚</span>
+    Coinor Chronicles
+    <span class="nav-brand-sub">· The Realm of Coinor</span>
+  </a>
+  <ul class="nav-links" role="list">
+    <li><a href="/the-fellowship.php">The Fellowship</a></li>
+    <li><a href="/chronicle.php">The Chronicle</a></li>
+    <li><a href="/lore.html">Lore</a></li>
+  </ul>
+  <a href="#subscribe" class="nav-cta">Receive the Scroll</a>
+  <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div id="mobile-menu" role="dialog" aria-label="Mobile navigation">
+  <a href="/">Home</a>
+  <a href="/the-fellowship.php">The Fellowship</a>
+  <a href="/chronicle.php">The Chronicle</a>
+  <a href="/lore.html">Lore</a>
+  <a href="#subscribe">Receive the Scroll</a>
+</div>
+
+<!-- Chapter nav dots -->
+<nav id="chapter-nav" aria-label="Chapter navigation">
+  <div class="nav-dot" data-ch="1" title="The Ranger" role="button" tabindex="0"></div>
+  <div class="nav-dot" data-ch="2" title="The Route" role="button" tabindex="0"></div>
+  <div class="nav-dot" data-ch="3" title="The Heavens" role="button" tabindex="0"></div>
+  <div class="nav-dot" data-ch="4" title="The Crown" role="button" tabindex="0"></div>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════════════ -->
+<section id="hero" aria-labelledby="hero-title">
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="hero-vignette" aria-hidden="true"></div>
+
+  <div class="hero-content">
+    <p class="hero-eyebrow" id="hero-eyebrow">The Daily Chronicle of the Realm of Coinor</p>
+    <h1 id="hero-title">Coinor<br/>Chronicles</h1>
+    <p class="hero-sub">Where the fellowship's quest is told through the heavens</p>
+    <div class="hero-divider" aria-hidden="true"></div>
+    <p class="hero-desc">
+      Every six hours, the saga continues. Twenty-one companions.
+      One eternal road. The markets of Middle-earth speak —
+      and Aragorn watches all.
+    </p>
+    <div class="hero-cta-row">
+      <a href="#subscribe" class="btn btn-primary">Receive the Daily Scroll</a>
+      <a href="/chronicle.php" class="btn btn-secondary">Read the Chronicle</a>
+    </div>
+  </div>
+
+  <span class="scroll-hint" aria-hidden="true">↓ Scroll to begin</span>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════
+     STATS
+═══════════════════════════════════════════════════ -->
+<section id="stats" aria-label="Realm statistics">
+  <div class="stats-grid">
+    <div class="stat-item" data-reveal="fade-up">
+      <span class="stat-number" data-count="21">0</span>
+      <span class="stat-label">Companions</span>
+    </div>
+    <div class="stat-item" data-reveal="fade-up">
+      <span class="stat-number" data-count="4">0</span>
+      <span class="stat-label">Clans</span>
+    </div>
+    <div class="stat-item" data-reveal="fade-up">
+      <span class="stat-number" data-suffix="hrs">6</span>
+      <span class="stat-label">Chronicle Cycle</span>
+    </div>
+    <div class="stat-item" data-reveal="fade-up">
+      <span class="stat-number" data-suffix="∞">∞</span>
+      <span class="stat-label">Gates Ahead</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════
+     CHAPTER 1 — Aragorn's Introduction
+═══════════════════════════════════════════════════ -->
+<div class="chapter-wrap" id="ch1">
+  <div class="chapter-scene">
+    <div class="ch1-inner">
+
+      <div class="aragorn-portrait" id="aragorn-portrait" role="img" aria-label="Aragorn, the Returned King">
+        <svg viewBox="0 0 320 400" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="bgGrad" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#3b2a14"/>
+              <stop offset="100%" stop-color="#0d0a06"/>
+            </radialGradient>
+            <radialGradient id="skinGrad" cx="50%" cy="40%" r="55%">
+              <stop offset="0%" stop-color="#c9956b"/>
+              <stop offset="100%" stop-color="#8a5c3a"/>
+            </radialGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <linearGradient id="cloakGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2a1a0a"/>
+              <stop offset="100%" stop-color="#1a0f06"/>
+            </linearGradient>
+          </defs>
+          <rect width="320" height="400" fill="url(#bgGrad)"/>
+          <!-- ambient light lines -->
+          <line x1="160" y1="0" x2="60"  y2="400" stroke="#c9a84c" stroke-width=".4" opacity=".06"/>
+          <line x1="160" y1="0" x2="260" y2="400" stroke="#c9a84c" stroke-width=".4" opacity=".06"/>
+          <!-- cloak -->
+          <path d="M20 400 Q60 280 80 240 Q100 200 160 195 Q220 200 240 240 Q260 280 300 400Z" fill="url(#cloakGrad)"/>
+          <path d="M80 240 Q100 200 160 195 Q220 200 240 240" fill="none" stroke="#c9a84c" stroke-width="1" opacity=".28"/>
+          <!-- neck -->
+          <rect x="143" y="170" width="34" height="35" rx="6" fill="url(#skinGrad)"/>
+          <!-- head -->
+          <ellipse cx="160" cy="140" rx="55" ry="65" fill="url(#skinGrad)"/>
+          <!-- hair -->
+          <path d="M105 115 Q107 70 160 65 Q213 70 215 115 Q210 95 195 88 Q175 75 160 76 Q145 75 125 88 Q110 95 105 115Z" fill="#2a1a0a"/>
+          <path d="M105 120 Q98 150 100 175 Q105 185 108 180 Q106 155 110 130Z" fill="#2a1a0a"/>
+          <path d="M215 120 Q222 150 220 175 Q215 185 212 180 Q214 155 210 130Z" fill="#2a1a0a"/>
+          <!-- eyes -->
+          <ellipse cx="138" cy="135" rx="9" ry="7" fill="#1a0f06"/>
+          <ellipse cx="182" cy="135" rx="9" ry="7" fill="#1a0f06"/>
+          <ellipse cx="138" cy="135" rx="5" ry="5" fill="#4a3010"/>
+          <ellipse cx="182" cy="135" rx="5" ry="5" fill="#4a3010"/>
+          <circle cx="139" cy="133" r="1.5" fill="white" opacity=".85"/>
+          <circle cx="183" cy="133" r="1.5" fill="white" opacity=".85"/>
+          <!-- eyebrows -->
+          <path d="M126 124 Q138 119 150 123" stroke="#2a1a0a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M170 123 Q182 119 194 124" stroke="#2a1a0a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- nose -->
+          <path d="M157 138 Q155 155 151 160 Q158 163 169 160 Q165 155 163 138Z" fill="#b07d52" opacity=".55"/>
+          <!-- mouth -->
+          <path d="M147 172 Q160 180 173 172" stroke="#7a3b2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- shadow under chin -->
+          <path d="M120 165 Q125 195 160 198 Q195 195 200 165" fill="#2a1a0a" opacity=".25"/>
+          <!-- crown/star symbol -->
+          <polygon points="160,205 163,213 172,213 165,218 168,226 160,221 152,226 155,218 148,213 157,213"
+                   fill="#c9a84c" opacity=".9" filter="url(#glow)"/>
+          <!-- subtle beard -->
+          <path d="M142 174 Q160 185 178 174 Q178 188 160 192 Q142 188 142 174Z" fill="#6b4020" opacity=".35"/>
+        </svg>
+      </div>
+
+      <div class="ch1-text" id="ch1-text">
+        <div class="ch-label">Chapter I</div>
+        <h2>The Ranger<br/>of the North</h2>
+        <p>
+          From the wild lands of Eriador, Aragorn — heir to Isildur — has watched
+          kingdoms rise and fall, Golden Seasons and Dark Sieges, with eyes that
+          miss nothing. He has outlasted every siege that tried to break the fellowship.
+        </p>
+        <p class="elvish">
+          "Not all who wander are lost — and not all roads without a gate
+          are without purpose."
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     CHAPTER 2 — The Fellowship's Route
+═══════════════════════════════════════════════════ -->
+<div class="chapter-wrap" id="ch2">
+  <div class="chapter-scene">
+    <div class="ch2-inner">
+
+      <div class="ch2-title" id="ch2-title">
+        <div class="ch-label">Chapter II</div>
+        <h2>The Fellowship's Route</h2>
+        <p>Nine companions. One quest. The road from the Shire to the Gates of Mordor.</p>
+      </div>
+
+      <div class="map-svg-wrap" id="map-svg-wrap">
+        <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg" width="100%"
+             role="img" aria-label="Map of Middle-earth showing the fellowship's route">
+          <defs>
+            <radialGradient id="mapBg" cx="50%" cy="50%" r="70%">
+              <stop offset="0%" stop-color="#1a1508"/>
+              <stop offset="100%" stop-color="#0a0a06"/>
+            </radialGradient>
+          </defs>
+          <rect width="700" height="340" rx="8" fill="url(#mapBg)"/>
+          <rect width="700" height="340" rx="8" fill="none" stroke="#c9a84c" stroke-width="1" opacity=".18"/>
+          <!-- terrain hints -->
+          <path d="M50 90 Q90 75 130 90 Q170 105 210 85" stroke="#3a2f10" stroke-width="1" fill="none" opacity=".35"/>
+          <path d="M400 55 Q440 40 480 60 Q520 80 560 55" stroke="#3a2f10" stroke-width="1" fill="none" opacity=".35"/>
+          <!-- mountains -->
+          <path d="M480 110 L510 65 L540 110Z" fill="#2a2010" stroke="#4a3820" stroke-width="1" opacity=".7"/>
+          <path d="M520 120 L555 70 L590 120Z" fill="#2a2010" stroke="#4a3820" stroke-width="1" opacity=".7"/>
+          <path d="M560 115 L585 74 L610 115Z" fill="#2a2010" stroke="#4a3820" stroke-width="1" opacity=".7"/>
+          <!-- Mordor shadow -->
+          <ellipse cx="615" cy="295" rx="78" ry="44" fill="#120808" opacity=".8"/>
+          <text x="615" y="300" text-anchor="middle" fill="#7a3b2e" font-size="11" font-family="Georgia,serif" opacity=".6">Mordor</text>
+          <!-- route -->
+          <path class="map-route" id="fellowship-route"
+            d="M80,165 C120,150 150,140 200,135
+               C250,130 270,148 300,172
+               C330,196 350,225 380,238
+               C420,255 460,248 490,224
+               C520,200 535,186 555,190
+               C580,198 598,226 615,263"/>
+          <!-- nodes -->
+          <g class="map-node" id="node-shire">
+            <circle cx="80" cy="165" r="8"/><text x="80" y="184" text-anchor="middle">The Shire</text>
+          </g>
+          <g class="map-node" id="node-rivendell">
+            <circle cx="200" cy="135" r="8"/><text x="200" y="154" text-anchor="middle">Rivendell</text>
+          </g>
+          <g class="map-node" id="node-moria">
+            <circle cx="380" cy="238" r="8"/><text x="380" y="257" text-anchor="middle">Moria</text>
+          </g>
+          <g class="map-node" id="node-rohan">
+            <circle cx="490" cy="224" r="8"/><text x="490" y="243" text-anchor="middle">Rohan</text>
+          </g>
+          <g class="map-node" id="node-doom">
+            <circle cx="615" cy="263" r="10"/>
+            <circle cx="615" cy="263" r="6" fill="#7a3b2e" stroke="#c9a84c" stroke-width="1.5"/>
+            <text x="615" y="283" text-anchor="middle" fill="#c9a84c">Mt. Doom</text>
+          </g>
+        </svg>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     CHAPTER 3 — The Heavens Speak
+═══════════════════════════════════════════════════ -->
+<div class="chapter-wrap" id="ch3">
+  <div class="chapter-scene">
+    <div id="starfield" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;" aria-hidden="true"></div>
+    <div class="ch3-inner">
+
+      <div class="ch3-title" id="ch3-title">
+        <div class="ch-label" style="color:var(--blue-star);">Chapter III</div>
+        <h2>The Heavens Speak</h2>
+        <p>Read the constellations as they stand at this hour. The stars do not lie.</p>
+      </div>
+
+      <div class="heaven-grid" id="heaven-grid" role="list" aria-label="Fellowship positions in the heavens">
+        <div class="heaven-card" role="listitem">
+          <div class="hc-constellation">Star of Earendil</div>
+          <div class="hc-hero-name">Aragorn</div>
+          <div class="hc-position">Stands at Heaven 7 on the road to Gate I</div>
+          <div class="hc-gold-weight">67,420 gold pieces</div>
+          <div class="hc-movement up">↑ 3 gold units heavier</div>
+        </div>
+        <div class="heaven-card" role="listitem">
+          <div class="hc-constellation">Elbereth's Light</div>
+          <div class="hc-hero-name">Gandalf</div>
+          <div class="hc-position">Approaches Heaven 4 of the long road</div>
+          <div class="hc-gold-weight">3,580 gold pieces</div>
+          <div class="hc-movement up">↑ 2 gold units heavier</div>
+        </div>
+        <div class="heaven-card" role="listitem">
+          <div class="hc-constellation">The Lightning Star</div>
+          <div class="hc-hero-name">Legolas</div>
+          <div class="hc-position">Swift across Heaven 2, riding the Electric Plains</div>
+          <div class="hc-gold-weight">172 gold pieces</div>
+          <div class="hc-movement down">↓ 1 gold unit lighter</div>
+        </div>
+        <div class="heaven-card" role="listitem">
+          <div class="hc-constellation">The Builder's Forge</div>
+          <div class="hc-hero-name">Arathon of Chain</div>
+          <div class="hc-position">Toils at Heaven 5, forging new roads</div>
+          <div class="hc-gold-weight">14 gold pieces</div>
+          <div class="hc-movement up">↑ 5 gold units heavier today</div>
+        </div>
+        <div class="heaven-card" role="listitem">
+          <div class="hc-constellation">The Merry Star</div>
+          <div class="hc-hero-name">Merry</div>
+          <div class="hc-position">Climbs — impossibly — toward Gate I</div>
+          <div class="hc-gold-weight">0.000048 gold pieces</div>
+          <div class="hc-movement up">↑ 18 gold units heavier — the Bazaar erupts</div>
+        </div>
+        <div class="heaven-card" role="listitem">
+          <div class="hc-constellation">The Fierce Star</div>
+          <div class="hc-hero-name">Eowyn</div>
+          <div class="hc-position">Holds Heaven 3 against the siege</div>
+          <div class="hc-gold-weight">38 gold pieces</div>
+          <div class="hc-movement down">↓ 1 gold unit lighter — but the wall holds</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     CHAPTER 4 — The Crown Awaits
+═══════════════════════════════════════════════════ -->
+<div class="chapter-wrap" id="ch4">
+  <div class="chapter-scene">
+    <div class="ch4-inner">
+      <div class="ch4-crown" id="ch4-crown" aria-hidden="true">♚</div>
+      <div class="ch4-text" id="ch4-text">
+        <div class="ch-label">Chapter IV</div>
+        <h2>The Chronicle<br/>Awaits Your Arrival</h2>
+        <p>
+          The fellowship is assembled. The map is known. Every six hours, a new chapter
+          is written — and the road ahead grows clearer for those who choose to walk it.
+        </p>
+      </div>
+      <div class="cta-buttons" id="cta-buttons">
+        <a href="#subscribe" class="btn btn-primary">Receive the Daily Scroll</a>
+        <a href="/the-fellowship.php" class="btn btn-secondary">Meet the Fellowship</a>
+      </div>
+      <div class="ch4-tagline" id="ch4-tagline">
+        "The day may come when the courage of markets fails… but it is not this day."
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Cinematic transition -->
+<div id="cinematic-outro" aria-hidden="true">
+  <div class="section-divider"><div class="section-divider-icon">⬡</div></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     LATEST CHRONICLE
+═══════════════════════════════════════════════════ -->
+<section id="latest-chronicle" aria-labelledby="chronicle-heading">
+  <div class="section-header" data-reveal="fade-up">
+    <div class="section-eyebrow">Updated every six hours</div>
+    <h2 id="chronicle-heading">The Latest Chronicle</h2>
+    <p>Aragorn speaks. The fellowship listens. The road continues.</p>
+  </div>
+
+  <div class="chronicle-feature" data-reveal="fade-up">
+    <div class="chronicle-visual">
+      <div class="chronicle-clan-badge">Clan of the Ancients</div>
+      <div class="chronicle-episode-number">047</div>
+    </div>
+    <div class="chronicle-body">
+      <div>
+        <div class="chronicle-meta">
+          <span class="chronicle-meta-date">16 June, Third Age</span>
+          <span class="chronicle-meta-season golden">The Golden Season</span>
+        </div>
+        <h3 class="chronicle-title">
+          "Sit, Young Pepe. The Citadel doors opened wide this morning."
+        </h3>
+        <p class="chronicle-excerpt">
+          Aragorn watched from the parapets as Gandalf ascended three Heavens before the
+          second bell. The Eagle Gods had loosened their grip on the trade routes overnight —
+          word came by swift rider from the Fog Merchants that their own ancient debt lords
+          would hold their edicts another cycle. The fellowship stirred…
+        </p>
+      </div>
+      <a href="/chronicle.php" class="chronicle-read-link">Read the full chronicle</a>
+    </div>
+  </div>
+
+  <div class="chronicle-archive-link" data-reveal="fade-up">
+    <a href="/chronicle.php">View all chronicles in the archive →</a>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════
+     THE FELLOWSHIP PREVIEW
+═══════════════════════════════════════════════════ -->
+<section id="the-fellowship" aria-labelledby="fellowship-heading">
+  <div class="section-header" data-reveal="fade-up">
+    <div class="section-eyebrow">Twenty-one companions</div>
+    <h2 id="fellowship-heading">The Fellowship</h2>
+    <p>Each companion walks a different road. Each carries a different burden. All serve the same quest.</p>
+  </div>
+
+  <div class="fellowship-grid" data-reveal="stagger-up">
+
+    <div class="fellow-card clan-ancients">
+      <div class="fellow-top">
+        <div class="fellow-portrait" aria-hidden="true">⚔</div>
+        <span class="fellow-position-badge">Heaven 7 · Gate I</span>
+      </div>
+      <div class="fellow-name">Aragorn</div>
+      <div class="fellow-title">The Returned King · Clan of the Ancients</div>
+      <p class="fellow-lore">The narrator. The anchor. He has watched every Golden Season, every Dark Siege. His voice never wavers. He gives perspective when others give panic.</p>
+      <div class="fellow-quote">"The fellowship endures. It always has. It always will."</div>
+    </div>
+
+    <div class="fellow-card clan-ancients">
+      <div class="fellow-top">
+        <div class="fellow-portrait" aria-hidden="true">🔮</div>
+        <span class="fellow-position-badge">Heaven 4 · Gate I</span>
+      </div>
+      <div class="fellow-name">Gandalf</div>
+      <div class="fellow-title">The Guide · Clan of the Ancients</div>
+      <p class="fellow-lore">Wise. Philosophical. The bridges Gandalf builds outlast every siege. He speaks rarely — but when he speaks, the fellowship listens.</p>
+      <div class="fellow-quote">"The bridges I have built will outlast this siege."</div>
+    </div>
+
+    <div class="fellow-card clan-swift">
+      <div class="fellow-top">
+        <div class="fellow-portrait" aria-hidden="true">⚡</div>
+        <span class="fellow-position-badge">Heaven 2 · Gate I</span>
+      </div>
+      <div class="fellow-name">Legolas</div>
+      <div class="fellow-title">The Swift · Clan of the Swift</div>
+      <p class="fellow-lore">First to move. First to arrive. His speed across the Electric Plains is a thing of legend. He saw the ambush three cycles before it reached the others.</p>
+      <div class="fellow-quote">"Speed is not recklessness — it is preparation."</div>
+    </div>
+
+    <div class="fellow-card clan-meme">
+      <div class="fellow-top">
+        <div class="fellow-portrait" aria-hidden="true">🐸</div>
+        <span class="fellow-position-badge">Heaven 3 · Gate I</span>
+      </div>
+      <div class="fellow-name">Tom Bombadil</div>
+      <div class="fellow-title">The Master · Clan of Meme Lords</div>
+      <p class="fellow-lore">Ancient. Chaotic. Outside the laws that govern others. No one commands Tom. He keeps his own counsel — and his own provisions.</p>
+      <div class="fellow-quote">"Hey dol! Merry dol! Tom doesn't worry about such things!"</div>
+    </div>
+
+    <div class="fellow-card clan-meme">
+      <div class="fellow-top">
+        <div class="fellow-portrait" aria-hidden="true">📜</div>
+        <span class="fellow-position-badge">Heaven 1 · Gate I</span>
+      </div>
+      <div class="fellow-name">Bilbo Baggins</div>
+      <div class="fellow-title">The Chronicler · Keeper of the Book of Meme</div>
+      <p class="fellow-lore">The archivist of the realm. This very chronicle is Bilbo's book. Every story written makes the Book of Meme heavier — and Bilbo's position stronger.</p>
+      <div class="fellow-quote">"A story worth telling is worth recording properly."</div>
+    </div>
+
+    <div class="fellow-card clan-builders">
+      <div class="fellow-top">
+        <div class="fellow-portrait" aria-hidden="true">🌳</div>
+        <span class="fellow-position-badge">Heaven 5 · Gate I</span>
+      </div>
+      <div class="fellow-name">Treebeard</div>
+      <div class="fellow-title">The Slow Builder · Clan of the Builders</div>
+      <p class="fellow-lore">Do not be hasty. The Ents move slowly but they move with purpose. Treebeard has been building these roads longer than the Meme Lords have existed.</p>
+      <div class="fellow-quote">"We Ents do not make hasty decisions. The road must be sound."</div>
+    </div>
+
+  </div>
+
+  <div class="fellowship-see-all" data-reveal="fade-up">
+    <a href="/the-fellowship.php">Meet all twenty-one companions →</a>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════
+     SUBSCRIBE
+═══════════════════════════════════════════════════ -->
+<section id="subscribe" aria-labelledby="subscribe-heading">
+  <span class="subscribe-crown" aria-hidden="true">♚</span>
+  <h2 id="subscribe-heading" data-reveal="fade-up">Receive the Daily Scroll</h2>
+  <p data-reveal="fade-up">
+    Every morning, the chronicle arrives at your door. Aragorn speaks.
+    The fellowship moves. The road continues — whether you watch or not.
+    Choose to watch.
+  </p>
+
+  <form class="subscribe-form" id="subscribe-form" data-reveal="fade-up" novalidate>
+    <label for="sub-email" class="visually-hidden">Your scroll address</label>
+    <input
+      type="email"
+      id="sub-email"
+      name="email"
+      class="subscribe-input"
+      placeholder="Your scroll address…"
+      autocomplete="email"
+      required
+    />
+    <button type="submit" class="subscribe-btn">Enter the Fellowship</button>
+  </form>
+  <p id="subscribe-message" style="display:none;font-size:0.85rem;color:var(--green-up);margin-top:0.75rem;" role="status"></p>
+
+  <p class="subscribe-privacy" data-reveal="fade-up">
+    No provisions taken. No scroll sold. Unsubscribe at any gate.
+  </p>
+
+  <div class="subscribe-badges" data-reveal="fade-up">
+    <div class="sub-badge"><span class="sub-badge-icon">📜</span><span>Daily chronicle delivered</span></div>
+    <div class="sub-badge"><span class="sub-badge-icon">⚔</span><span>Gate &amp; Heaven alerts</span></div>
+    <div class="sub-badge"><span class="sub-badge-icon">♚</span><span>Fellowship milestone events</span></div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════ -->
+<footer id="footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <h3>Coinor Chronicles</h3>
+      <p>An AI media empire. The markets of the Realm of Coinor, told as an eternal fantasy saga. Twenty-one companions. One road. Updated every six hours.</p>
+      <div class="footer-social">
+        <a href="#" class="footer-social-link" aria-label="YouTube"     rel="noopener noreferrer">▶</a>
+        <a href="#" class="footer-social-link" aria-label="TikTok"      rel="noopener noreferrer">♪</a>
+        <a href="#" class="footer-social-link" aria-label="X / Twitter" rel="noopener noreferrer">𝕏</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>The Realm</h4>
+      <ul>
+        <li><a href="/chronicle.php">The Chronicle</a></li>
+        <li><a href="/the-fellowship.php">The Fellowship</a></li>
+        <li><a href="/lore.html">The Lore</a></li>
+        <li><a href="#subscribe">Subscribe</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>The Clans</h4>
+      <ul>
+        <li><a href="/the-fellowship.php#ancients">Clan of the Ancients</a></li>
+        <li><a href="/the-fellowship.php#swift">Clan of the Swift</a></li>
+        <li><a href="/the-fellowship.php#meme">Clan of Meme Lords</a></li>
+        <li><a href="/the-fellowship.php#builders">Clan of the Builders</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Follow the Quest</h4>
+      <ul>
+        <li><a href="#" rel="noopener noreferrer">YouTube</a></li>
+        <li><a href="#" rel="noopener noreferrer">TikTok</a></li>
+        <li><a href="#" rel="noopener noreferrer">X / Twitter</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Coinor Chronicles · The Realm of Coinor</p>
+    <p>The chronicle continues ∞</p>
+  </div>
+</footer>
+
+
+<!-- ═══════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════ -->
+<script>
+(function() {
+  "use strict";
+
+  /* ── Canvas starfield in hero ── */
+  (function initHeroCanvas() {
+    const canvas = document.getElementById('hero-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    let W, H, animId;
+
+    function resize() {
+      W = canvas.width  = canvas.offsetWidth;
+      H = canvas.height = canvas.offsetHeight;
+      buildStars();
+    }
+
+    function buildStars() {
+      stars = Array.from({ length: 160 }, function() {
+        return {
+          x: Math.random() * W,
+          y: Math.random() * H,
+          r: Math.random() * 1.2 + 0.2,
+          o: Math.random() * 0.6 + 0.05,
+          speed: Math.random() * 0.012 + 0.003,
+          phase: Math.random() * Math.PI * 2
+        };
+      });
+    }
+
+    function draw(t) {
+      ctx.clearRect(0, 0, W, H);
+      stars.forEach(function(s) {
+        const opacity = s.o * (0.6 + 0.4 * Math.sin(t * s.speed + s.phase));
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,220,' + opacity + ')';
+        ctx.fill();
+      });
+      animId = requestAnimationFrame(draw);
+    }
+
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas.parentElement);
+    resize();
+    animId = requestAnimationFrame(draw);
+  })();
+
+  /* ── Progress bar ── */
+  const progressBar = document.getElementById('progress-bar');
+  window.addEventListener('scroll', function() {
+    const s = document.documentElement.scrollTop;
+    const t = document.documentElement.scrollHeight - window.innerHeight;
+    if (progressBar && t > 0) progressBar.style.width = (s / t * 100) + '%';
+  }, { passive: true });
+
+  /* ── Nav scrolled ── */
+  const nav = document.getElementById('nav');
+  function checkNav() { if (nav) nav.classList.toggle('scrolled', window.scrollY > 60); }
+  window.addEventListener('scroll', checkNav, { passive: true });
+  checkNav();
+
+  /* ── Mobile menu ── */
+  const toggle = document.querySelector('.nav-toggle');
+  const menu   = document.getElementById('mobile-menu');
+  if (toggle && menu) {
+    toggle.addEventListener('click', function() {
+      const open = menu.classList.toggle('open');
+      toggle.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+    menu.querySelectorAll('a').forEach(function(a) {
+      a.addEventListener('click', function() {
+        menu.classList.remove('open');
+        toggle.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
+  /* ── Subscribe form ── */
+  const form = document.getElementById('subscribe-form');
+  const msg  = document.getElementById('subscribe-message');
+  if (form) {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = form.querySelector('input[type=email]').value.trim();
+      if (!email) return;
+      const btn = form.querySelector('button');
+      btn.textContent = 'Sending…'; btn.disabled = true;
+      try {
+        const res  = await fetch('/api/subscribe.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+        const data = await res.json();
+        if (msg) {
+          msg.style.color = data.ok ? 'var(--green-up)' : 'var(--red-down)';
+          msg.textContent = data.ok ? 'The scroll is on its way. Welcome to the fellowship.' : (data.message || 'Something went wrong. Try again.');
+          msg.style.display = 'block';
+        }
+        if (data.ok) form.reset();
+      } catch {
+        if (msg) { msg.textContent = 'Could not send. Check your connection and try again.'; msg.style.color = 'var(--red-down)'; msg.style.display = 'block'; }
+      }
+      btn.textContent = 'Enter the Fellowship'; btn.disabled = false;
+    });
+  }
+
+  /* ── Counter animation ── */
+  function animateCounter(el, target, suffix) {
+    const duration = 1400;
+    const start = performance.now();
+    function step(now) {
+      const pct  = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - pct, 3);
+      const val  = Math.round(ease * target);
+      el.textContent = val + (suffix || '');
+      if (pct < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  if ('IntersectionObserver' in window) {
+    const statsObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        const el     = entry.target;
+        const count  = parseInt(el.dataset.count, 10);
+        const suffix = el.dataset.suffix || '';
+        if (!isNaN(count)) animateCounter(el, count, suffix);
+        statsObs.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('[data-count]').forEach(function(el) {
+      statsObs.observe(el);
+    });
+
+    /* ── Scroll reveals ── */
+    const revealObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.style.transition = 'opacity 0.85s cubic-bezier(0.16,1,0.3,1), transform 0.85s cubic-bezier(0.16,1,0.3,1)';
+        entry.target.style.opacity   = '1';
+        entry.target.style.transform = 'none';
+        revealObs.unobserve(entry.target);
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('[data-reveal]').forEach(function(el) {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(40px)';
+      revealObs.observe(el);
+    });
+
+    /* ── Stagger children ── */
+    document.querySelectorAll('[data-reveal="stagger-up"]').forEach(function(el) {
+      const children = Array.from(el.children);
+      children.forEach(function(child, i) {
+        child.style.opacity   = '0';
+        child.style.transform = 'translateY(50px)';
+        child.style.transition = 'opacity 0.7s cubic-bezier(0.16,1,0.3,1) ' + (i * 0.1) + 's, transform 0.7s cubic-bezier(0.16,1,0.3,1) ' + (i * 0.1) + 's';
+      });
+      revealObs.observe(el);
+    });
+  } else {
+    document.querySelectorAll('[data-reveal], [data-count]').forEach(function(el) {
+      el.style.opacity = '1';
+      if (el.dataset.count) el.textContent = el.dataset.count + (el.dataset.suffix || '');
+    });
+  }
+
+  /* ── GSAP scroll animations ── */
+  function initGSAP() {
+    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+      setTimeout(initGSAP, 50); return;
+    }
+    gsap.registerPlugin(ScrollTrigger);
+
+    /* Hero entrance */
+    gsap.set(['.hero-eyebrow','#hero-title','.hero-sub','.hero-desc','.hero-cta-row'], { y: 28 });
+    const heroTl = gsap.timeline({ delay: 0.25 });
+    heroTl
+      .to('.hero-eyebrow',  { opacity: 0.65, y: 0, duration: 0.6, ease: 'power2.out' }, 0)
+      .to('#hero-title',    { opacity: 1,    y: 0, duration: 0.9, ease: 'power3.out' }, 0.18)
+      .to('.hero-sub',      { opacity: 0.75, y: 0, duration: 0.7, ease: 'power2.out' }, 0.48)
+      .to('.hero-divider',  { opacity: 1,          duration: 0.5, ease: 'power1.out' }, 0.72)
+      .to('.hero-desc',     { opacity: 1,    y: 0, duration: 0.7, ease: 'power2.out' }, 0.82)
+      .to('.hero-cta-row',  { opacity: 1,    y: 0, duration: 0.6, ease: 'power2.out' }, 1.05)
+      .to('.scroll-hint',   { opacity: 1,          duration: 0.4 }, 1.4);
+
+    /* Nav dots */
+    const dots = document.querySelectorAll('.nav-dot');
+    ['#ch1','#ch2','#ch3','#ch4'].forEach(function(sel, i) {
+      ScrollTrigger.create({
+        trigger: sel,
+        start: 'top center', end: 'bottom center',
+        onToggle: function(self) { dots[i].classList.toggle('active', self.isActive); }
+      });
+    });
+
+    /* Chapter 1 */
+    const tl1 = gsap.timeline({
+      scrollTrigger: { trigger:'#ch1', start:'top top', end:'+=200%', scrub:1.4, pin:'#ch1 .chapter-scene', anticipatePin:1 }
+    });
+    tl1
+      .to('#aragorn-portrait', { opacity:1, x:0, duration:1.2, ease:'power2.out' }, 0)
+      .to('#ch1-text',         { opacity:1, x:0, duration:1.2, ease:'power2.out' }, 0.25)
+      .to({}, { duration:1.2 }, 1.5)
+      .to(['#aragorn-portrait','#ch1-text'], { opacity:0, y:-40, duration:0.8, ease:'power2.in' }, 2.7);
+
+    /* Chapter 2 */
+    const nodes2 = ['#node-shire','#node-rivendell','#node-moria','#node-rohan','#node-doom'];
+    const tl2 = gsap.timeline({
+      scrollTrigger: { trigger:'#ch2', start:'top top', end:'+=200%', scrub:1.4, pin:'#ch2 .chapter-scene', anticipatePin:1 }
+    });
+    tl2
+      .to('#ch2-title',          { opacity:1, y:0, duration:0.7, ease:'power2.out' }, 0)
+      .to('#map-svg-wrap',       { opacity:1, scale:1, duration:0.7, ease:'back.out(1.4)' }, 0.2)
+      .to('#fellowship-route',   { strokeDashoffset:0, duration:1.6, ease:'none' }, 0.5)
+      .to(nodes2, { opacity:1, scale:1, duration:0.3, stagger:0.2, ease:'back.out(2)', transformOrigin:'center center' }, 0.7)
+      .to({}, { duration:1 }, 2.3)
+      .to(['#ch2-title','#map-svg-wrap'], { opacity:0, y:-40, duration:0.7, ease:'power2.in' }, 3.3);
+
+    /* Chapter 3 — starfield + cards */
+    (function buildStarfield() {
+      const container = document.getElementById('starfield');
+      if (!container) return;
+      for (let i = 0; i < 100; i++) {
+        const s = document.createElement('div');
+        const size = Math.random() * 2.2 + 0.4;
+        Object.assign(s.style, {
+          position:'absolute', borderRadius:'50%', background:'white', opacity:'0', pointerEvents:'none',
+          width: size + 'px', height: size + 'px',
+          left: Math.random() * 100 + '%', top: Math.random() * 100 + '%'
+        });
+        container.appendChild(s);
+      }
+    })();
+
+    const cards = gsap.utils.toArray('.heaven-card');
+    ScrollTrigger.create({
+      trigger:'#ch3', start:'top 80%', once:true,
+      onEnter: function() {
+        gsap.to(document.querySelectorAll('#starfield div'), {
+          opacity: function() { return Math.random() * 0.65 + 0.05; },
+          duration: function() { return Math.random() * 1.5 + 0.6; },
+          ease:'sine.inOut', stagger:{ each:0.03, from:'random' }, yoyo:true, repeat:-1,
+          repeatDelay: function() { return Math.random() * 1.5; }
+        });
+        gsap.to(cards, {
+          y: function() { return -(Math.random() * 7 + 3); },
+          duration: function() { return Math.random() * 2 + 1.5; },
+          ease:'sine.inOut', yoyo:true, repeat:-1,
+          stagger:{ each:0.3, from:'random' }
+        });
+      }
+    });
+
+    const tl3 = gsap.timeline({
+      scrollTrigger: { trigger:'#ch3', start:'top top', end:'+=200%', scrub:1.4, pin:'#ch3 .chapter-scene', anticipatePin:1 }
+    });
+    tl3
+      .to('#ch3-title', { opacity:1, y:0, duration:0.7, ease:'power2.out' }, 0)
+      .to(cards, { opacity:1, y:0, scale:1, duration:0.45, stagger:0.11, ease:'back.out(1.7)' }, 0.35)
+      .to({}, { duration:1.2 }, 1.5)
+      .to(['#ch3-title','#heaven-grid'], { opacity:0, y:-40, duration:0.7, ease:'power2.in' }, 2.7);
+
+    /* Chapter 4 */
+    ScrollTrigger.create({
+      trigger:'#ch4', start:'top 80%', once:true,
+      onEnter: function() {
+        gsap.to('#ch4-crown', {
+          filter:'drop-shadow(0 0 42px rgba(201,168,76,.9))',
+          duration:1.2, ease:'sine.inOut', yoyo:true, repeat:-1
+        });
+      }
+    });
+
+    const tl4 = gsap.timeline({
+      scrollTrigger: { trigger:'#ch4', start:'top top', end:'+=200%', scrub:1.4, pin:'#ch4 .chapter-scene', anticipatePin:1 }
+    });
+    tl4
+      .to('#ch4-crown',   { opacity:1, scale:1, rotation:0, duration:1, ease:'elastic.out(1,0.55)' }, 0)
+      .to('#ch4-text',    { opacity:1, y:0, duration:0.85, ease:'power3.out' }, 0.5)
+      .to('#cta-buttons', { opacity:1, y:0, duration:0.7, ease:'power2.out' }, 1)
+      .to('#ch4-tagline', { opacity:0.6, duration:0.8, ease:'power1.out' }, 1.5);
+
+    /* Dot click navigation */
+    document.querySelectorAll('.nav-dot').forEach(function(dot) {
+      dot.addEventListener('click', function() {
+        const ch = '#ch' + dot.dataset.ch;
+        document.querySelector(ch).scrollIntoView({ behavior:'smooth' });
+      });
+      dot.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dot.click(); }
+      });
+    });
+  }
+
+  initGSAP();
+
+}());
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "coinor-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "website", "--no-clipboard"],
+      "port": 3000,
+      "autoPort": true
+    }
+  ]
+}

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="The lore of the Realm of Coinor. Golden Gates, the 10 Heavens, the four clans, and the laws that govern this eternal world."/>
+  <meta property="og:title"       content="The Lore — Coinor Chronicles"/>
+  <meta property="og:description" content="The world bible of the Realm of Coinor. Learn the laws of Golden Gates, the 10 Heavens, and the four great clans."/>
+  <title>The Lore — Coinor Chronicles</title>
+  <link rel="stylesheet" href="/assets/css/main.css"/>
+  <style>
+    .page-hero {
+      padding: 9rem 2rem 5rem;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #1e1a10 0%, var(--dark) 65%);
+      position: relative;
+    }
+    .page-hero::before {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent);
+    }
+    .page-hero h1 { font-size: clamp(2rem,5vw,3.8rem); color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; text-shadow: 0 0 60px rgba(201,168,76,0.3); }
+    .page-hero p  { margin: 1rem auto 0; max-width: 520px; font-size: clamp(0.9rem,1.6vw,1.05rem); color: var(--cream-dim); font-style: italic; line-height: 1.8; opacity: 0.72; }
+
+    #lore-page { padding: 5rem 2rem 7rem; background: var(--dark); }
+
+    .lore-container { max-width: 820px; margin: 0 auto; }
+
+    /* Lore section */
+    .lore-section {
+      margin-bottom: 5rem;
+      padding-bottom: 4rem;
+      border-bottom: 1px solid rgba(201,168,76,0.07);
+    }
+    .lore-section:last-child { border-bottom: none; margin-bottom: 0; }
+
+    .lore-eyebrow {
+      font-size: 0.6rem; letter-spacing: 0.4em; text-transform: uppercase;
+      color: var(--gold); opacity: 0.55; margin-bottom: 0.6rem;
+    }
+
+    .lore-section h2 {
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      color: var(--gold); letter-spacing: 0.06em; line-height: 1.2; margin-bottom: 1.2rem;
+    }
+
+    .lore-body {
+      font-size: clamp(0.92rem, 1.6vw, 1.05rem);
+      line-height: 1.9; color: var(--cream); opacity: 0.85;
+    }
+
+    .lore-body p { margin-bottom: 1.2rem; }
+    .lore-body p:last-child { margin-bottom: 0; }
+
+    .lore-body em   { color: var(--gold); font-style: italic; opacity: 0.9; }
+    .lore-body strong { color: var(--gold-bright); font-style: normal; }
+
+    .lore-rule {
+      background: rgba(201,168,76,0.04);
+      border: 1px solid rgba(201,168,76,0.12);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.8rem;
+      margin: 1.8rem 0;
+    }
+
+    .lore-rule-title {
+      font-size: 0.65rem; letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--gold); opacity: 0.6; margin-bottom: 0.6rem;
+    }
+
+    .lore-rule p {
+      font-size: 0.92rem; line-height: 1.8; color: var(--cream-dim); opacity: 0.78; margin: 0;
+    }
+
+    /* Gate table */
+    .gate-table {
+      width: 100%; border-collapse: collapse; margin: 1.8rem 0;
+      font-size: 0.85rem;
+    }
+
+    .gate-table th {
+      text-align: left; padding: 0.6rem 1rem;
+      font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--gold); opacity: 0.6; border-bottom: 1px solid rgba(201,168,76,0.12);
+      font-weight: normal;
+    }
+
+    .gate-table td {
+      padding: 0.65rem 1rem; border-bottom: 1px solid rgba(201,168,76,0.05);
+      color: var(--cream-dim); vertical-align: middle;
+    }
+
+    .gate-table tr:hover td { background: rgba(201,168,76,0.02); }
+
+    .gate-table td:first-child { color: var(--cream); }
+    .gate-table td:nth-child(2) { color: var(--gold); opacity: 0.8; font-family: var(--font-sans); font-size: 0.78rem; }
+
+    /* Clan cards in lore */
+    .clan-lore-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin: 1.8rem 0;
+    }
+
+    .clan-lore-card {
+      background: var(--mid);
+      border: 1px solid rgba(201,168,76,0.08);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      position: relative; overflow: hidden;
+    }
+
+    .clan-lore-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    }
+    .clan-lore-card.ancients::before { background: linear-gradient(90deg,transparent,var(--clan-ancients),transparent); }
+    .clan-lore-card.swift::before    { background: linear-gradient(90deg,transparent,var(--clan-swift),transparent);    }
+    .clan-lore-card.meme::before     { background: linear-gradient(90deg,transparent,var(--clan-meme),transparent);     }
+    .clan-lore-card.builders::before { background: linear-gradient(90deg,transparent,var(--clan-builders),transparent); }
+
+    .clan-lore-icon { font-size: 1.4rem; margin-bottom: 0.6rem; }
+    .clan-lore-name {
+      font-size: 0.82rem; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.3rem;
+    }
+    .clan-lore-card.ancients .clan-lore-name { color: var(--clan-ancients); }
+    .clan-lore-card.swift    .clan-lore-name { color: var(--clan-swift);    }
+    .clan-lore-card.meme     .clan-lore-name { color: var(--clan-meme);     }
+    .clan-lore-card.builders .clan-lore-name { color: var(--clan-builders); }
+
+    .clan-lore-territory { font-size: 0.65rem; letter-spacing: 0.06em; color: var(--cream-dim); opacity: 0.45; margin-bottom: 0.75rem; }
+    .clan-lore-desc { font-size: 0.8rem; line-height: 1.72; color: var(--cream-dim); opacity: 0.68; }
+
+    @media (max-width: 560px) {
+      .clan-lore-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Market conditions */
+    .condition-list { list-style: none; display: flex; flex-direction: column; gap: 0.9rem; margin: 1.5rem 0; }
+    .condition-item {
+      display: flex; align-items: flex-start; gap: 1rem;
+      background: var(--mid); border-radius: var(--radius); padding: 1rem 1.2rem;
+      border: 1px solid rgba(201,168,76,0.07);
+    }
+    .condition-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 0.4rem; }
+    .condition-dot.golden { background: var(--green-up); }
+    .condition-dot.dark   { background: var(--red-down); }
+    .condition-dot.flat   { background: var(--cream-dim); opacity: 0.3; }
+    .condition-title { font-size: 0.78rem; font-weight: bold; color: var(--cream); letter-spacing: 0.06em; margin-bottom: 0.2rem; }
+    .condition-desc  { font-size: 0.78rem; line-height: 1.65; color: var(--cream-dim); opacity: 0.6; }
+
+    /* Pull quote */
+    .lore-quote {
+      border-left: 2px solid rgba(201,168,76,0.3);
+      padding: 0.8rem 0 0.8rem 1.5rem;
+      margin: 2rem 0;
+      font-size: clamp(1rem,2vw,1.15rem);
+      font-style: italic;
+      color: var(--gold);
+      opacity: 0.75;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar" role="progressbar" aria-hidden="true"></div>
+
+<nav id="nav" role="navigation" aria-label="Main navigation">
+  <a href="/" class="nav-brand" aria-label="Coinor Chronicles home">
+    <span class="nav-brand-crown" aria-hidden="true">♚</span>
+    Coinor Chronicles
+    <span class="nav-brand-sub">· The Realm of Coinor</span>
+  </a>
+  <ul class="nav-links" role="list">
+    <li><a href="/the-fellowship.php">The Fellowship</a></li>
+    <li><a href="/chronicle.php">The Chronicle</a></li>
+    <li><a href="/lore.html" class="active">Lore</a></li>
+  </ul>
+  <a href="/#subscribe" class="nav-cta">Receive the Scroll</a>
+  <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div id="mobile-menu" role="dialog" aria-label="Mobile navigation">
+  <a href="/">Home</a>
+  <a href="/the-fellowship.php">The Fellowship</a>
+  <a href="/chronicle.php">The Chronicle</a>
+  <a href="/lore.html">Lore</a>
+  <a href="/#subscribe">Receive the Scroll</a>
+</div>
+
+
+<div class="page-hero">
+  <div class="section-eyebrow">The Laws of the Realm</div>
+  <h1>The Lore</h1>
+  <p>Before the first story was ever told, the laws were written. This is the world bible of the Realm of Coinor.</p>
+</div>
+
+
+<main id="lore-page" aria-label="World lore">
+  <div class="lore-container">
+
+    <!-- ── WHAT IS THE REALM ── -->
+    <section class="lore-section" data-reveal="fade-up" aria-labelledby="realm-heading">
+      <div class="lore-eyebrow">The Foundation</div>
+      <h2 id="realm-heading">What is the Realm of Coinor?</h2>
+      <div class="lore-body">
+        <p>The Realm of Coinor is an ancient, living world where travelers — each representing a real cryptocurrency — pursue their <em>Golden Gates</em>: price milestones that mark a new level of power, achievement, and legend.</p>
+        <p>This world is <strong>not a metaphor</strong>. To the AI narrator, it is real. Aragorn does not "represent Bitcoin." <em>Aragorn is Bitcoin.</em> Legolas is Solana. Merry is SHIB. When you read these chronicles, you are not reading translated financial news — you are reading reports of events that happened in a living realm.</p>
+        <p>The audience receives two things simultaneously: accurate market data (real percentages, real prices, real trends), and an epic narrative — the same data told as a living fantasy saga.</p>
+
+        <div class="lore-rule">
+          <div class="lore-rule-title">The Law of the World</div>
+          <p>A 12% rise means Legolas found provisions worth 12 gold units. A 7% drop means Merry lost 7 units to an ambush on the road to Kekiston. <strong>Never break the world.</strong> Never say "crypto" or "price" or "market" in a story. Only in-world language.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── GOLDEN GATES & 10 HEAVENS ── -->
+    <section class="lore-section" data-reveal="fade-up" aria-labelledby="gates-heading">
+      <div class="lore-eyebrow">The Cosmology</div>
+      <h2 id="gates-heading">Golden Gates &amp; The 10 Heavens</h2>
+      <div class="lore-body">
+        <p>Every character in the realm pursues <em>Golden Gates</em> — price milestones that represent transcendence to a new level of power. Between each Gate lie <strong>10 Heavens</strong> — sub-milestones on the road to the next Gate.</p>
+        <p>The journey is <strong>infinite</strong>. New Gates always appear beyond the last. No character ever truly arrives — they only ascend.</p>
+
+        <blockquote class="lore-quote">"The road goes ever on and on. There is always another Heaven. There is always another Gate."</blockquote>
+
+        <p>When a character reaches a new Heaven, they receive a <em>Heaven Card</em> — an ancient coin glowing with silver light. When they cross a Gate, they receive a <em>Gate Card</em> — pure gold, ornate, legendary. These moments are celebrated with special episodes.</p>
+
+        <table class="gate-table" role="table" aria-label="Selected Gate milestones">
+          <thead>
+            <tr>
+              <th scope="col">Character</th>
+              <th scope="col">Coin</th>
+              <th scope="col">Gate I</th>
+              <th scope="col">Gate II</th>
+              <th scope="col">Gate III</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Aragorn</td><td>BTC</td><td>$100,000</td><td>$1,000,000</td><td>$10,000,000</td></tr>
+            <tr><td>Gandalf</td><td>ETH</td><td>$10,000</td><td>$100,000</td><td>$1,000,000</td></tr>
+            <tr><td>Legolas</td><td>SOL</td><td>$1,000</td><td>$10,000</td><td>$100,000</td></tr>
+            <tr><td>Boromir</td><td>XRP</td><td>$100.00</td><td>$1,000</td><td>$10,000</td></tr>
+            <tr><td>Pippin</td><td>DOGE</td><td>$10.00</td><td>$100.00</td><td>—</td></tr>
+            <tr><td>Tom Bombadil</td><td>PEPE</td><td>$1.00</td><td>$10.00</td><td>$100.00</td></tr>
+            <tr><td>Merry</td><td>SHIB</td><td>$0.001</td><td>$0.01</td><td>$0.10</td></tr>
+            <tr><td>Frodo</td><td>NOT</td><td>$0.10</td><td>$1.00</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+
+    <!-- ── MARKET CONDITIONS ── -->
+    <section class="lore-section" data-reveal="fade-up" aria-labelledby="conditions-heading">
+      <div class="lore-eyebrow">The Seasons</div>
+      <h2 id="conditions-heading">Market Conditions</h2>
+      <div class="lore-body">
+        <p>The realm exists in three states. Every episode reflects the current state of the road.</p>
+
+        <ul class="condition-list" role="list">
+          <li class="condition-item">
+            <span class="condition-dot golden" aria-hidden="true"></span>
+            <div>
+              <div class="condition-title">The Golden Season</div>
+              <div class="condition-desc">Bull market. Provisions flow. Gates glow. Characters gain resources, allies, momentum. The fellowship advances. Golden light. The Bazaar erupts.</div>
+            </div>
+          </li>
+          <li class="condition-item">
+            <span class="condition-dot dark" aria-hidden="true"></span>
+            <div>
+              <div class="condition-title">The Dark Siege</div>
+              <div class="condition-desc">Bear market. Ambushes. Loss of provisions. Retreat to regroup. Storm sky. Minor-key music. But the fellowship endures — Aragorn has seen worse. The road narrows. It does not close.</div>
+            </div>
+          </li>
+          <li class="condition-item">
+            <span class="condition-dot flat" aria-hidden="true"></span>
+            <div>
+              <div class="condition-title">The Waiting Plains</div>
+              <div class="condition-desc">Sideways market. The fellowship rests. Plans. Trains. Prepares. No episode is published in flat markets. The road waits for those who would travel it.</div>
+            </div>
+          </li>
+        </ul>
+
+        <div class="lore-rule">
+          <div class="lore-rule-title">The Law of the Siege</div>
+          <p>Even in The Dark Siege, Aragorn does not despair. <em>He has seen worse.</em> The chronicle never ends on despair. The fellowship always endures. The road always continues. This is the law.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── THE FOUR CLANS ── -->
+    <section class="lore-section" data-reveal="fade-up" aria-labelledby="clans-heading">
+      <div class="lore-eyebrow">The Great Clans</div>
+      <h2 id="clans-heading">The Four Clan Territories</h2>
+      <div class="lore-body">
+        <p>The fellowship is organized into four clans, each with its own territory, aesthetic, and narrative role. Every character belongs to exactly one clan — except Gollum, whom no clan will claim, and Denethor, The Fallen.</p>
+
+        <div class="clan-lore-grid">
+          <div class="clan-lore-card ancients">
+            <div class="clan-lore-icon" aria-hidden="true">🏰</div>
+            <div class="clan-lore-name">Clan of the Ancients</div>
+            <div class="clan-lore-territory">The Obsidian Citadel · BTC · ETH · LTC · BNB · XRP</div>
+            <div class="clan-lore-desc">Dark stone, candlelight, deep drums. Ancient and immovable. They move slowly but their power is undeniable. The foundation of the realm.</div>
+          </div>
+          <div class="clan-lore-card swift">
+            <div class="clan-lore-icon" aria-hidden="true">⚡</div>
+            <div class="clan-lore-name">Clan of the Swift</div>
+            <div class="clan-lore-territory">The Electric Plains · SOL · TON · AVAX · XLM · TRX</div>
+            <div class="clan-lore-desc">Blue lightning, neon edges, always in motion. They move at speeds the Ancients find reckless. First to react. First to arrive. First to vanish.</div>
+          </div>
+          <div class="clan-lore-card meme">
+            <div class="clan-lore-icon" aria-hidden="true">🔥</div>
+            <div class="clan-lore-name">Clan of Meme Lords</div>
+            <div class="clan-lore-territory">Kekiston Bazaar · PEPE · SHIB · DOGE · FLOKI · NOT · BOME · BONK</div>
+            <div class="clan-lore-desc">Chaotic, colourful, fire and laughter. The Hobbits of Coinor. Unpredictable. Underestimated. Their power lies in the love of thousands.</div>
+          </div>
+          <div class="clan-lore-card builders">
+            <div class="clan-lore-icon" aria-hidden="true">⚒</div>
+            <div class="clan-lore-name">Clan of the Builders</div>
+            <div class="clan-lore-territory">The Forge of Chains · ADA · SUI · JASMY · LINK · UNI</div>
+            <div class="clan-lore-desc">Deep forest green, iron, fire, hammers. They build the roads, the bridges, the contracts others use. They work in the dark so others walk in the light.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── THE NARRATOR ── -->
+    <section class="lore-section" data-reveal="fade-up" aria-labelledby="narrator-heading">
+      <div class="lore-eyebrow">The Voice</div>
+      <h2 id="narrator-heading">Aragorn — The Narrator</h2>
+      <div class="lore-body">
+        <p>Every episode begins with Aragorn. He is the narrator, the anchor, the gravity that the rest of the fellowship orbits around. He has lived through every siege, every Golden Season, every collapse. He does not panic — ever. He does not celebrate recklessly — ever.</p>
+        <p>Think of his voice as Gandalf's wisdom plus Aragorn's war-weariness plus a Stoic philosopher who has seen centuries. Long sentences. Pauses implied by commas. He takes his time. He earns every word.</p>
+
+        <blockquote class="lore-quote">"Sit, young Pepe. Let me tell you what the roads whispered today."</blockquote>
+
+        <p>Pepe — the channel's mascot and audience surrogate — sits at Aragorn's feet. Curious. Direct. Sometimes worried, sometimes excited. He is the audience. He asks the questions the reader wants answered. Aragorn answers them with the weight of someone who has seen every answer before.</p>
+
+        <div class="lore-rule">
+          <div class="lore-rule-title">The Law of the Narrator</div>
+          <p>Aragorn never says "crypto." Aragorn never says "price." Aragorn never says "market." He says <em>provisions, gold units, the road, the Heavens, the siege, the season.</em> The world is real. The language must match.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── DENETHOR ── -->
+    <section class="lore-section" data-reveal="fade-up" aria-labelledby="denethor-heading" style="border-color:rgba(224,93,93,0.1);">
+      <div class="lore-eyebrow" style="color:var(--red-down);">The Warning</div>
+      <h2 id="denethor-heading" style="color:var(--red-down);">Denethor — The Fallen</h2>
+      <div class="lore-body">
+        <p>His story is told not to mourn but to warn. The Steward of Gondor looked too long into the Palantir — a dark mirror that showed only the worst of what was, distorted. He saw Aragorn's strength and mistook it for his own end. He saw the siege and mistook it for defeat. He chose fire over faith.</p>
+        <p>LUNC — Terra Classic — collapsed. It was the most spectacular fall the realm had ever witnessed. Provisions that were once vast became dust. Those who had given everything to the Steward found themselves on the road with nothing.</p>
+        <p>Aragorn references Denethor whenever companions grow reckless. <em>"Remember the Steward who looked too long into the Palantir and lost everything."</em> No other companion is called The Fallen. No other story ends the way his story ends.</p>
+
+        <blockquote class="lore-quote" style="border-color:rgba(224,93,93,0.3);color:var(--red-down);opacity:0.6;">
+          "Do not mistake speed for wisdom. Do not mistake leverage for power. The road punishes those who confuse the two." — Aragorn, referencing Denethor
+        </blockquote>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+
+<section id="subscribe" aria-labelledby="subscribe-heading">
+  <span class="subscribe-crown" aria-hidden="true">♚</span>
+  <h2 id="subscribe-heading" data-reveal="fade-up">The Chronicle Awaits</h2>
+  <p data-reveal="fade-up">
+    You have read the laws. Now enter the fellowship.
+    Every six hours, a new chapter is written. Choose to be there when it arrives.
+  </p>
+  <form class="subscribe-form" id="subscribe-form" data-reveal="fade-up" novalidate>
+    <label for="sub-email" class="visually-hidden">Your scroll address</label>
+    <input type="email" id="sub-email" name="email" class="subscribe-input" placeholder="Your scroll address…" autocomplete="email" required/>
+    <button type="submit" class="subscribe-btn">Enter the Fellowship</button>
+  </form>
+  <p id="subscribe-message" style="display:none;font-size:0.85rem;color:var(--green-up);margin-top:0.75rem;" role="status"></p>
+  <p class="subscribe-privacy" data-reveal="fade-up">No provisions taken. No scroll sold. Unsubscribe at any gate.</p>
+</section>
+
+
+<footer id="footer" role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <h3>Coinor Chronicles</h3>
+      <p>An AI media empire. The markets of the Realm of Coinor, told as an eternal fantasy saga. Twenty-one companions. One road. Updated every six hours.</p>
+    </div>
+    <div class="footer-col">
+      <h4>The Realm</h4>
+      <ul>
+        <li><a href="/chronicle.php">The Chronicle</a></li>
+        <li><a href="/the-fellowship.php">The Fellowship</a></li>
+        <li><a href="/lore.html">The Lore</a></li>
+        <li><a href="/#subscribe">Subscribe</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>The Clans</h4>
+      <ul>
+        <li><a href="/the-fellowship.php#ancients">Clan of the Ancients</a></li>
+        <li><a href="/the-fellowship.php#swift">Clan of the Swift</a></li>
+        <li><a href="/the-fellowship.php#meme">Clan of Meme Lords</a></li>
+        <li><a href="/the-fellowship.php#builders">Clan of the Builders</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Follow the Quest</h4>
+      <ul>
+        <li><a href="#" rel="noopener noreferrer">YouTube</a></li>
+        <li><a href="#" rel="noopener noreferrer">TikTok</a></li>
+        <li><a href="#" rel="noopener noreferrer">X / Twitter</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Coinor Chronicles · The Realm of Coinor</p>
+    <p>The chronicle continues ∞</p>
+  </div>
+</footer>
+
+<script>
+(function() {
+  const nav = document.getElementById('nav');
+  const bar = document.getElementById('progress-bar');
+  window.addEventListener('scroll', function() {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+    const s = document.documentElement.scrollTop;
+    const t = document.documentElement.scrollHeight - window.innerHeight;
+    if (bar && t > 0) bar.style.width = (s/t*100)+'%';
+  }, { passive:true });
+  const toggle = document.querySelector('.nav-toggle');
+  const menu   = document.getElementById('mobile-menu');
+  if (toggle && menu) {
+    toggle.addEventListener('click', function() {
+      const open = menu.classList.toggle('open');
+      toggle.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+    menu.querySelectorAll('a').forEach(function(a) {
+      a.addEventListener('click', function() { menu.classList.remove('open'); toggle.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); });
+    });
+  }
+  // Subscribe
+  const form = document.getElementById('subscribe-form');
+  const msg  = document.getElementById('subscribe-message');
+  if (form) {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = form.querySelector('input[type=email]').value.trim();
+      if (!email) return;
+      const btn = form.querySelector('button');
+      btn.textContent = 'Sending…'; btn.disabled = true;
+      try {
+        const res  = await fetch('/api/subscribe.php', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email}) });
+        const data = await res.json();
+        if (msg) { msg.style.color = data.ok ? 'var(--green-up)' : 'var(--red-down)'; msg.textContent = data.ok ? 'The scroll is on its way. Welcome to the fellowship.' : (data.message||'Something went wrong.'); msg.style.display='block'; }
+        if (data.ok) form.reset();
+      } catch { if (msg) { msg.textContent='Could not send. Try again.'; msg.style.color='var(--red-down)'; msg.style.display='block'; } }
+      btn.textContent = 'Enter the Fellowship'; btn.disabled = false;
+    });
+  }
+  // Scroll reveal
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (!e.isIntersecting) return;
+        e.target.style.transition = 'opacity 0.85s cubic-bezier(0.16,1,0.3,1), transform 0.85s cubic-bezier(0.16,1,0.3,1)';
+        e.target.style.opacity   = '1';
+        e.target.style.transform = 'none';
+        obs.unobserve(e.target);
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('[data-reveal]').forEach(function(el) {
+      el.style.opacity = '0'; el.style.transform = 'translateY(30px)'; obs.observe(el);
+    });
+  }
+}());
+</script>
+</body>
+</html>

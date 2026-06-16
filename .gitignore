@@ -1,0 +1,40 @@
+# Secrets — never commit
+website/includes/config.local.php
+.env
+*.env
+*.env.*
+
+# Database dumps
+*.sql.bak
+*.dump.sql
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.suo
+*.swp
+*.swo
+*~
+
+# Python cache (from pipeline scripts)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Logs
+*.log
+logs/
+
+# Generated eval outputs
+eval-outputs/*.json
+eval-outputs/*.txt
+
+# Node (if used later)
+node_modules/
