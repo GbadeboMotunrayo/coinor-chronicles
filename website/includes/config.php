@@ -21,6 +21,9 @@ define('COINGECKO_API',  'https://api.coingecko.com/api/v3');
 // Chronicles generated every N seconds (6 hours)
 define('CHRONICLE_INTERVAL', 21600);
 
+// Admin panel password — override in config.local.php
+define('ADMIN_PASS', getenv('ADMIN_PASSWORD') ?: 'changeme123');
+
 // Load local overrides if present
 if (file_exists(__DIR__ . '/config.local.php')) {
     require_once __DIR__ . '/config.local.php';

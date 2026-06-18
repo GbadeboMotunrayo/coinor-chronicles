@@ -155,7 +155,8 @@ CREATE TABLE IF NOT EXISTS site_settings (
 
 INSERT IGNORE INTO site_settings (setting_key, setting_value) VALUES
   ('total_story_count', '0'),
-  ('last_run', '');
+  ('last_run', ''),
+  ('last_emailed_episode', '0');
 
 -- ── Pipeline logs ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS pipeline_logs (

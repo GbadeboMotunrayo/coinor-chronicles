@@ -1,0 +1,9 @@
+# Block direct access to run-pipeline and send-newsletter
+# unless they have the ?key= param (enforced in PHP).
+# This file also prevents directory listing.
+Options -Indexes
+
+# Allow all PHP files through — auth is handled in PHP
+<Files "*.php">
+  Require all granted
+</Files>
