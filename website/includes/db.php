@@ -17,16 +17,25 @@ function get_db(): PDO {
     return $pdo;
 }
 
-function get_latest_chronicles(int $limit = 12, int $offset = 0): array {
+function get_latest_chronicles(int $limit = 12, int $offset = 0, ?string $season = null): array {
     $db = get_db();
+    $where = 'published = 1';
+    if ($season !== null && in_array($season, ['golden', 'dark', 'flat'], true)) {
+        $where .= ' AND season = :season';
+    } else {
+        $season = null;
+    }
     $stmt = $db->prepare(
-        'SELECT id, episode_number, title, excerpt, season, clan, character_name,
+        "SELECT id, episode_number, title, excerpt, season, clan, character_name,
                 published_at, slug
          FROM chronicles
-         WHERE published = 1
+         WHERE {$where}
          ORDER BY published_at DESC
-         LIMIT :limit OFFSET :offset'
+         LIMIT :limit OFFSET :offset"
     );
+    if ($season !== null) {
+        $stmt->bindValue(':season', $season);
+    }
     $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
@@ -53,8 +62,42 @@ function get_chronicle_by_id(int $id): ?array {
     return $row ?: null;
 }
 
-function count_chronicles(): int {
-    return (int) get_db()->query('SELECT COUNT(*) FROM chronicles WHERE published = 1')->fetchColumn();
+function count_chronicles(?string $season = null): int {
+    $db = get_db();
+    if ($season !== null && in_array($season, ['golden', 'dark', 'flat'], true)) {
+        $stmt = $db->prepare('SELECT COUNT(*) FROM chronicles WHERE published = 1 AND season = :season');
+        $stmt->execute([':season' => $season]);
+        return (int) $stmt->fetchColumn();
+    }
+    return (int) $db->query('SELECT COUNT(*) FROM chronicles WHERE published = 1')->fetchColumn();
+}
+
+/**
+ * Previous/next *published* episodes relative to the given one.
+ * IDs are not contiguous (drafts, deletions), so walk episode_number.
+ */
+function get_adjacent_chronicles(array $episode): array {
+    $db  = get_db();
+    $num = (int)($episode['episode_number'] ?? 0);
+
+    $prev = $db->prepare(
+        'SELECT id, episode_number FROM chronicles
+         WHERE published = 1 AND episode_number < :num
+         ORDER BY episode_number DESC LIMIT 1'
+    );
+    $prev->execute([':num' => $num]);
+
+    $next = $db->prepare(
+        'SELECT id, episode_number FROM chronicles
+         WHERE published = 1 AND episode_number > :num
+         ORDER BY episode_number ASC LIMIT 1'
+    );
+    $next->execute([':num' => $num]);
+
+    return [
+        'prev' => $prev->fetch() ?: null,
+        'next' => $next->fetch() ?: null,
+    ];
 }
 
 function save_subscriber(string $email): bool {

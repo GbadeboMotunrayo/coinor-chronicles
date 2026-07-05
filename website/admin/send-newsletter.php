@@ -12,15 +12,7 @@
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 
-define('ADMIN_PASSWORD', getenv('ADMIN_PASSWORD') ?: (defined('ADMIN_PASS') ? ADMIN_PASS : 'changeme123'));
-
-$expected_key = substr(hash('sha256', ADMIN_PASSWORD), 0, 16);
-$provided_key = $_GET['key'] ?? '';
-
-if (!hash_equals($expected_key, $provided_key)) {
-    http_response_code(403);
-    exit('Forbidden');
-}
+require_cron_key();
 
 // ── Fetch latest unsent chronicle ─────────────────────────────────────────────
 try {
@@ -56,6 +48,8 @@ if (empty($subscribers)) {
 $ep_num   = str_pad((int)$chronicle['episode_number'], 3, '0', STR_PAD_LEFT);
 $title    = strip_tags($chronicle['title']);
 $excerpt  = strip_tags($chronicle['excerpt']);
+$title_html   = htmlspecialchars($title, ENT_QUOTES);
+$excerpt_html = htmlspecialchars($excerpt, ENT_QUOTES);
 $url      = SITE_URL . '/story.php?id=' . (int)$chronicle['id'];
 $season   = $chronicle['season'] === 'golden' ? '⭐ The Golden Season' : ($chronicle['season'] === 'dark' ? '⚔ Dark Siege' : '— The Waiting Plains');
 $date_fmt = date('j F Y', strtotime($chronicle['published_at'] ?? 'now'));
@@ -106,9 +100,9 @@ $html_body = <<<HTML
   </div>
   <div class="body">
     <div class="eyebrow">Episode {$ep_num} · {$season} · {$date_fmt}</div>
-    <div class="ep-title">{$title}</div>
+    <div class="ep-title">{$title_html}</div>
     <div class="meta">Narrated by Aragorn, Returned King · Clan of the Ancients</div>
-    <div class="excerpt">{$excerpt}</div>
+    <div class="excerpt">{$excerpt_html}</div>
     <a href="{$url}" class="cta">Read the full chronicle →</a>
     <div class="divider"></div>
     <div class="footer">

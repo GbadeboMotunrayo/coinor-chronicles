@@ -4,7 +4,8 @@ require_once __DIR__ . '/includes/config.php';
 $page   = max(1, (int)($_GET['page'] ?? 1));
 $per    = 12;
 $offset = ($page - 1) * $per;
-$season = $_GET['season'] ?? 'all';
+$season = in_array($_GET['season'] ?? 'all', ['golden', 'dark'], true) ? $_GET['season'] : 'all';
+$season_filter = $season === 'all' ? null : $season;
 
 // Try to load from DB; fall back to sample data for initial launch
 $chronicles = [];
@@ -12,12 +13,18 @@ $total      = 0;
 
 try {
     require_once __DIR__ . '/includes/db.php';
-    $chronicles = get_latest_chronicles($per, $offset);
-    $total      = count_chronicles();
+    $chronicles = get_latest_chronicles($per, $offset, $season_filter);
+    $total      = count_chronicles($season_filter);
 } catch (Throwable) {
     // DB not yet set up — show sample data
     $chronicles = get_sample_chronicles();
-    $total      = count($chronicles);
+    if ($season_filter !== null) {
+        $chronicles = array_values(array_filter(
+            $chronicles,
+            fn($c) => ($c['season'] ?? '') === $season_filter
+        ));
+    }
+    $total = count($chronicles);
 }
 
 function get_sample_chronicles(): array {

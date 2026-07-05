@@ -6,18 +6,25 @@
  */
 require_once __DIR__ . '/../includes/config.php';
 
-define('ADMIN_PASSWORD', getenv('ADMIN_PASSWORD') ?: (defined('ADMIN_PASS') ? ADMIN_PASS : 'changeme123'));
-
-session_start();
+secure_session_start();
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
-    if ($_POST['password'] === ADMIN_PASSWORD) {
+    if (!admin_password_is_configured()) {
+        $auth_error = 'No passphrase configured. Set ADMIN_PASSWORD in config.local.php first.';
+    } elseif (!csrf_check()) {
+        $auth_error = 'Session expired. Try again.';
+    } elseif (($wait = login_throttle_seconds_left()) > 0) {
+        $auth_error = "Too many attempts. Wait {$wait}s.";
+    } elseif (admin_password_verify((string)$_POST['password'])) {
+        login_record_success();
         $_SESSION['cc_admin'] = true;
         header('Location: /admin/');
         exit;
+    } else {
+        login_record_failure();
+        $auth_error = 'Wrong passphrase.';
     }
-    $auth_error = 'Wrong passphrase.';
 }
 
 if (empty($_SESSION['cc_admin'])) { ?>
@@ -47,6 +54,7 @@ if (empty($_SESSION['cc_admin'])) { ?>
     <p>The Obsidian Citadel admits only the author of the chronicle.</p>
     <?php if (!empty($auth_error)): ?><p class="error"><?= htmlspecialchars($auth_error) ?></p><?php endif; ?>
     <form method="POST">
+      <?= csrf_field() ?>
       <input type="password" name="password" class="login-input" placeholder="Passphrase…" autofocus autocomplete="current-password"/>
       <button type="submit" class="login-btn">Enter the Citadel</button>
     </form>
@@ -57,9 +65,12 @@ if (empty($_SESSION['cc_admin'])) { ?>
     exit;
 }
 
-// ── Logout ───────────────────────────────────────────────────────────────────
-if (isset($_GET['logout'])) {
-    session_destroy();
+// ── Logout (POST + CSRF so a stray link can't log you out) ──────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'logout') {
+    if (csrf_check()) {
+        $_SESSION = [];
+        session_destroy();
+    }
     header('Location: /admin/');
     exit;
 }
@@ -79,6 +90,11 @@ $action_msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db_ok) {
     $action = $_POST['action'] ?? '';
+
+    if ($action !== '' && !csrf_check()) {
+        $action_msg = 'error:Security token mismatch — the form expired. Try again.';
+        $action = '';
+    }
 
     if ($action === 'add_override') {
         $text  = trim($_POST['override_text'] ?? '');
@@ -266,7 +282,11 @@ if ($action_msg) {
     <a href="#fellowship">Fellowship</a>
     <a href="#logs">Logs</a>
   </div>
-  <a href="?logout=1" class="admin-logout">Logout</a>
+  <form method="POST" style="display:inline;">
+    <?= csrf_field() ?>
+    <input type="hidden" name="action" value="logout"/>
+    <button type="submit" class="admin-logout">Logout</button>
+  </form>
 </nav>
 
 <div id="admin-content">
@@ -308,8 +328,8 @@ if ($action_msg) {
       or visit it directly to force a run. Keep it secret.
     </p>
     <div class="trigger-box">
-      <span class="trigger-url"><?= htmlspecialchars(SITE_URL) ?>/admin/run-pipeline.php?key=<?= htmlspecialchars(substr(hash('sha256', ADMIN_PASSWORD), 0, 16)) ?></span>
-      <a href="/admin/run-pipeline.php?key=<?= htmlspecialchars(substr(hash('sha256', ADMIN_PASSWORD), 0, 16)) ?>" class="btn-admin btn-sm" target="_blank">Run Now ↗</a>
+      <span class="trigger-url"><?= htmlspecialchars(SITE_URL) ?>/admin/run-pipeline.php?key=<?= htmlspecialchars(cron_key()) ?></span>
+      <a href="/admin/run-pipeline.php?key=<?= htmlspecialchars(cron_key()) ?>" class="btn-admin btn-sm" target="_blank">Run Now ↗</a>
     </div>
   </div>
 
@@ -323,6 +343,7 @@ if ($action_msg) {
     </p>
 
     <form method="POST" class="override-form" style="margin-bottom:2rem;">
+      <?= csrf_field() ?>
       <input type="hidden" name="action" value="add_override"/>
       <div class="form-group">
         <label class="form-label">Story direction</label>
@@ -359,6 +380,7 @@ if ($action_msg) {
         <td style="white-space:nowrap;font-size:.75rem;"><?= substr($ov['created_at'],0,16) ?></td>
         <td>
           <form method="POST" onsubmit="return confirm('Delete this override?')">
+            <?= csrf_field() ?>
             <input type="hidden" name="action" value="delete_override"/>
             <input type="hidden" name="override_id" value="<?= (int)$ov['id'] ?>"/>
             <button type="submit" class="btn-danger">Delete</button>
@@ -400,6 +422,7 @@ if ($action_msg) {
           <div style="display:flex;gap:.5rem;align-items:center;">
             <a href="/story.php?id=<?= (int)$ch['id'] ?>" class="badge badge-gold" target="_blank" style="text-decoration:none;">View</a>
             <form method="POST">
+              <?= csrf_field() ?>
               <input type="hidden" name="action" value="publish_toggle"/>
               <input type="hidden" name="story_id" value="<?= (int)$ch['id'] ?>"/>
               <input type="hidden" name="published" value="<?= $ch['published'] ? 0 : 1 ?>"/>

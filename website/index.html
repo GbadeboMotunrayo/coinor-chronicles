@@ -1103,6 +1103,8 @@
   </p>
 
   <form class="subscribe-form" id="subscribe-form" data-reveal="fade-up" novalidate>
+    <!-- Honeypot: real users never see or fill this -->
+    <input type="text" name="realm" id="sub-realm" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;"/>
     <label for="sub-email" class="visually-hidden">Your scroll address</label>
     <input
       type="email"
@@ -1272,7 +1274,8 @@
       const btn = form.querySelector('button');
       btn.textContent = 'Sending…'; btn.disabled = true;
       try {
-        const res  = await fetch('/api/subscribe.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+        const realm = (form.querySelector('input[name=realm]') || {}).value || '';
+        const res  = await fetch('/api/subscribe.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, realm }) });
         const data = await res.json();
         if (msg) {
           msg.style.color = data.ok ? 'var(--green-up)' : 'var(--red-down)';

@@ -10,7 +10,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
+if (!is_array($input)) {
+    $input = [];
+}
 $email = trim($input['email'] ?? '');
+
+// Honeypot — bots fill every field; humans never see this one.
+// Answer with a fake success so scripts don't learn they were caught.
+if (!empty($input['realm'])) {
+    echo json_encode(['ok' => true, 'message' => 'Welcome to the fellowship. The chronicle comes to you.']);
+    exit;
+}
 
 if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(422);

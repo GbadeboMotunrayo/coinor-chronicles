@@ -4,22 +4,14 @@
  * Kicks off the Python AI pipeline from a browser or cron URL.
  *
  * Access: /admin/run-pipeline.php?key=YOUR_SECRET_KEY
- * The key is the first 16 chars of SHA-256(ADMIN_PASSWORD).
+ * The key is shown in the admin panel (derived from ADMIN_PASSWORD).
  *
  * Add to Hostinger cron:
  *   0 0,6,12,18 * * *  wget -q -O /dev/null "https://coinorchronicles.com/admin/run-pipeline.php?key=YOUR_KEY"
  */
 require_once __DIR__ . '/../includes/config.php';
 
-define('ADMIN_PASSWORD', getenv('ADMIN_PASSWORD') ?: (defined('ADMIN_PASS') ? ADMIN_PASS : 'changeme123'));
-
-$expected_key = substr(hash('sha256', ADMIN_PASSWORD), 0, 16);
-$provided_key = $_GET['key'] ?? '';
-
-if (!hash_equals($expected_key, $provided_key)) {
-    http_response_code(403);
-    exit('Forbidden');
-}
+require_cron_key();
 
 // Determine the Python executable (Hostinger uses python3)
 $python_bin = '/usr/bin/python3';

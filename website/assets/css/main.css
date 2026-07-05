@@ -604,3 +604,25 @@ ul       { list-style: none; }
 .text-gold   { color: var(--gold); }
 .text-center { text-align: center; }
 .italic      { font-style: italic; }
+
+/* ── ACCESSIBILITY ───────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: rgba(201, 168, 76, 0.3);
+  color: var(--cream);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-reveal] { opacity: 1; }
+}

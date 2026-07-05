@@ -1,12 +1,16 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
 
-$episode = null;
+$episode  = null;
+$adjacent = ['prev' => null, 'next' => null];
 $id = (int)($_GET['id'] ?? 0);
 
 try {
     require_once __DIR__ . '/includes/db.php';
     $episode = get_chronicle_by_id($id);
+    if ($episode) {
+        $adjacent = get_adjacent_chronicles($episode);
+    }
 } catch (Throwable) {
     // DB not yet set up — show sample
     if ($id === 47) {
@@ -36,7 +40,7 @@ try {
 
 if (!$episode) {
     http_response_code(404);
-    header('Location: /chronicle.php');
+    require __DIR__ . '/404.php';
     exit;
 }
 
@@ -200,18 +204,22 @@ $page_desc  = htmlspecialchars(mb_strimwidth(strip_tags($episode['excerpt'] ?? $
 <!-- Story body -->
 <main class="story-body-wrap" aria-label="Episode story">
   <article class="story-body">
-    <?= $episode['body'] ?? '<p>The chronicle scribes are setting their quills. This episode will appear shortly.</p>' ?>
+    <?= sanitize_story_html($episode['body'] ?? '') ?: '<p>The chronicle scribes are setting their quills. This episode will appear shortly.</p>' ?>
 
     <nav class="episode-nav" aria-label="Episode navigation">
-      <?php if ($episode['id'] > 1): ?>
-        <a href="/story.php?id=<?= $episode['id'] - 1 ?>" class="ep-nav-link">← Previous episode</a>
+      <?php if ($adjacent['prev']): ?>
+        <a href="/story.php?id=<?= (int)$adjacent['prev']['id'] ?>" class="ep-nav-link">← Previous episode</a>
       <?php else: ?>
         <span></span>
       <?php endif; ?>
 
       <a href="/chronicle.php" class="ep-nav-archive">All chronicles</a>
 
-      <a href="/story.php?id=<?= $episode['id'] + 1 ?>" class="ep-nav-link">Next episode →</a>
+      <?php if ($adjacent['next']): ?>
+        <a href="/story.php?id=<?= (int)$adjacent['next']['id'] ?>" class="ep-nav-link">Next episode →</a>
+      <?php else: ?>
+        <span></span>
+      <?php endif; ?>
     </nav>
   </article>
 </main>

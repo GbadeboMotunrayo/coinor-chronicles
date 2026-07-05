@@ -1,7 +1,8 @@
 <?php
+require_once __DIR__ . '/includes/config.php';
 http_response_code(404);
-$page_title       = 'Lost in the Waiting Plains';
-$page_description = 'The path you seek does not exist in these lands. Even Aragorn cannot find it.';
+$page_title = 'Lost in the Waiting Plains';
+$page_desc  = 'The path you seek does not exist in these lands. Even Aragorn cannot find it.';
 require_once __DIR__ . '/includes/header.php';
 ?>
 <main class="error-page">
