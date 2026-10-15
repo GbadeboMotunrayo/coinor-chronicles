@@ -41,6 +41,7 @@ which also alerts if the engine has not run for 14 hours, or the feed or this si
 | `index.html`, `styles.css`, `app.js` | yes | the home page (aged-scroll design and map; text-only DOM insertion) |
 | `lib.php`, `episode.php`, `clan.php`, `realm.php`, `about.php`, `sitemap.php`, `.htaccess`, `favicon.svg` | yes (`lib.php` blocked from the web) | **SEO pages**: real URLs and real HTML for every episode (`/episode/N`), clan (`/clan/KEY`), `/realm`, `/about` and `/sitemap.xml` |
 | `router_test.php` | **no** | local test helper for `php -S` |
+| `support.php`, `privacy.php`, `notice.php`, `subscribe.js`, `qr/` | yes | donation page (coin picker with QR), privacy page, signup form and its confirmation pages |
 | `episodes.json` | yes | fallback copy, empty; the live feed is on the VPS |
 | `robots.txt` | yes | allow search engines |
 | `episodes.sample.json` | **no, laptop only** | unapproved sample, visible locally with `?preview=1` |
@@ -64,3 +65,7 @@ Deploy: upload the changed files to `public_html` (Hostinger TUS upload). `episo
 ## Not built yet
 
 Voice and video, a mailing list, an RSS feed, a proper domain (`coinorchronicles.com` is not registered to you; the site uses `coinorchonicles.space`).
+
+## Phones and other screens
+
+Layout is driven by CSS media queries (phone, tablet, desktop, touch) and a small script that also sets `data-screen` and `data-touch` on `<html>`, so heavy effects (SVG paper filter, candle glow) switch off on phones. The page never scrolls sideways; touch targets are at least 44px; form fields use 16px type so iOS does not zoom.

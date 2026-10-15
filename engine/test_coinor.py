@@ -333,6 +333,46 @@ class ModelPools(unittest.TestCase):
         text, model = self.eng(calls, paid_models=["x-ai/grok-4.3"])._real_llm("s", "u", 100)
         self.assertEqual(model, "x-ai/grok-4.3"); self.assertEqual(calls[-1], ["x-ai/grok-4.3"])
 
+    def test_gemini_comes_after_openrouter_pools_and_before_paid_when_key_exists(self):
+        global calls_answers
+        calls, calls_answers = [], [(None, "x"), (None, "x")]
+        e = self.eng(calls, paid_models=["x-ai/grok-4.3"])
+        e._env_value = lambda n: "k" if n == "GEMINI_API_KEY" else ""
+        order = []
+        def g(system, user, mt, model, timeout, temp):
+            order.append(model); return (None, "gemini http 429") if model == "gemini-2.5-flash" else ("from gemini", "google/" + model)
+        e._gemini = g
+        text, model = e._real_llm("s", "u", 100)
+        self.assertEqual((text, model), ("from gemini", "google/gemini-2.5-flash-lite"))
+        self.assertEqual(order, ["gemini-2.5-flash", "gemini-2.5-flash-lite"]); self.assertEqual(len(calls), 2)   # paid never reached
+
+    def test_gemini_is_skipped_without_a_key(self):
+        global calls_answers
+        calls, calls_answers = [], [(None, "x"), (None, "x")]
+        e = self.eng(calls); e._env_value = lambda n: ""
+        e._gemini = lambda *a, **k: self.fail("gemini must not be called without a key")
+        self.assertIsNone(e._real_llm("s", "u", 100)[0])
+
+    def test_gemini_reply_is_parsed_and_key_is_sent_in_a_header_not_the_url(self):
+        import io, urllib.request as ur
+        seen = {}
+        class R(io.BytesIO):
+            def __enter__(self): return self
+            def __exit__(self, *a): pass
+        def fake_open(req, timeout=0):
+            seen["url"] = req.full_url; seen["hdr"] = dict(req.header_items()); seen["body"] = json.loads(req.data)
+            return R(json.dumps({"candidates": [{"content": {"parts": [{"text": "Once "}, {"text": "upon"}]}}]}).encode())
+        e = C.Engine(dict(C.DEFAULT_CFG, log_path="/dev/null"))
+        e._env_value = lambda n: "SECRETKEY"
+        old = ur.urlopen; ur.urlopen = fake_open
+        try:
+            text, model = e._gemini("sys", "usr", 500, "gemini-2.5-flash")
+        finally:
+            ur.urlopen = old
+        self.assertEqual((text, model), ("Once upon", "google/gemini-2.5-flash"))
+        self.assertNotIn("SECRETKEY", seen["url"]); self.assertEqual(seen["hdr"].get("X-goog-api-key"), "SECRETKEY")
+        self.assertEqual(seen["body"]["generationConfig"]["maxOutputTokens"], 500)
+
     def test_named_models_are_not_expanded(self):
         global calls_answers
         calls, calls_answers = [], [("ok", "m")]

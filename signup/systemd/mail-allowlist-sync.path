@@ -1,0 +1,9 @@
+[Unit]
+Description=Run the allowlist sync as soon as a signup asks for it
+
+[Path]
+PathChanged=/var/lib/coinor/allowlist.trigger
+Unit=mail-allowlist-sync.service
+
+[Install]
+WantedBy=multi-user.target

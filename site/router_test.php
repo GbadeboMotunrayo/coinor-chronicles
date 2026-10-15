@@ -4,6 +4,8 @@ if (preg_match('#^/episode/(\d+)/?$#', $u, $m)) { $_GET['n'] = $m[1]; require 'e
 if (preg_match('#^/clan/([a-z_]+)/?$#', $u, $m)) { $_GET['k'] = $m[1]; require 'clan.php'; return true; }
 if ($u === '/realm') { require 'realm.php'; return true; }
 if ($u === '/support') { require 'support.php'; return true; }
+if ($u === '/privacy') { require 'privacy.php'; return true; }
+if (preg_match('#^/notice/([a-z]+)/?$#', $u, $m)) { $_GET['k'] = $m[1]; require 'notice.php'; return true; }
 if ($u === '/about') { require 'about.php'; return true; }
 if ($u === '/sitemap.xml') { require 'sitemap.php'; return true; }
 return false;

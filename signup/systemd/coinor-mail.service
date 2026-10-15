@@ -1,0 +1,18 @@
+[Unit]
+Description=CoinorChronicles mailing list: signup API and confirmation sender
+After=network.target docker.service postfix@postfix-mgholdings.service
+Wants=docker.service
+
+[Service]
+User=hermes
+Group=hermes
+SupplementaryGroups=docker
+ExecStart=/usr/bin/python3 /usr/local/lib/coinor/coinor_mail.py serve
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

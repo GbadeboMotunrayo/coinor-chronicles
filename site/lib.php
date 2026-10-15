@@ -112,6 +112,7 @@ function page_open($o) {
   echo '<meta name="twitter:card" content="summary"><meta name="theme-color" content="#140e08">';
   echo '<link rel="icon" href="/favicon.svg" type="image/svg+xml">';
   echo '<link rel="stylesheet" href="/styles.css">';
+  echo '<script>(function(){var d=document.documentElement,w=function(){var x=innerWidth;d.setAttribute(\'data-screen\',x<600?\'phone\':x<1024?\'tablet\':\'desktop\');d.setAttribute(\'data-touch\',matchMedia(\'(pointer:coarse)\').matches?\'1\':\'0\')};w();addEventListener(\'resize\',w);addEventListener(\'orientationchange\',w)})()</script>';
   if (!empty($o['jsonld'])) echo '<script type="application/ld+json">' . json_encode($o['jsonld'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) . '</script>';
   echo '</head><body data-weather="' . h(weather()) . '">';
   echo '<a class="skip" href="#app">Skip to the chronicle</a>';
@@ -122,17 +123,18 @@ function page_open($o) {
 <header class="site-header"><div class="bar"><a class="brand" href="/" aria-label="CoinorChronicles home"><span>CoinorChronicles</span></a>
 <nav aria-label="Main"><a href="/">Chronicle</a><a href="/realm"
 HTML;
-  echo (($o['nav'] ?? '') === 'realm' ? ' aria-current="page"' : '') . '>The Realm</a><a href="/about"' . (($o['nav'] ?? '') === 'about' ? ' aria-current="page"' : '') . '>About</a></nav></div></header>';
+  echo (($o['nav'] ?? '') === 'realm' ? ' aria-current="page"' : '') . '>The Realm</a><a href="/about"' . (($o['nav'] ?? '') === 'about' ? ' aria-current="page"' : '') . '>About</a><a href="/support"' . (($o['nav'] ?? '') === 'support' ? ' aria-current="page"' : '') . '>Support</a></nav></div></header>';
   echo '<main id="app" tabindex="-1">';
 }
 
-function page_close() {
+function page_close($sub = true) {
+  if ($sub) echo '<div data-subscribe></div><script src="/subscribe.js" defer></script>';
   echo <<<'HTML'
 </main>
 <footer class="site-footer"><div>
 <p><strong>Fiction.</strong> The Realm of Coinor, its travellers and every episode are works of fiction that use public market data as story material. Nothing here is financial advice, a recommendation, or an offer. Markets are risky; do your own research.</p>
 <p>Episodes are written by AI and published automatically after they pass safety checks. No person reads each one first; a person can remove any episode.</p>
-<p class="muted"><a href="/support">Support the journey</a> · A story project from MG Holdings. Market data: <a href="https://www.coingecko.com/en/api" rel="noopener">Powered by CoinGecko API</a>.</p>
+<p class="muted"><a href="/support">Support the journey</a> · <a href="/privacy">Privacy</a> · A story project from MG Holdings. Market data: <a href="https://www.coingecko.com/en/api" rel="noopener">Powered by CoinGecko API</a>.</p>
 </div></footer>
 </div></div><div class="rod bottom" aria-hidden="true"></div></div>
 </body></html>

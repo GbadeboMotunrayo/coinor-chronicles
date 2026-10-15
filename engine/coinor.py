@@ -48,6 +48,8 @@ DEFAULT_CFG = {
     "models": ["google/gemma-4-31b-it:free", "nvidia/nemotron-3-super-120b-a12b:free", "google/gemma-4-26b-a4b-it:free"],
     # tried in order, one pool per call, when the whole previous pool failed (rate limit, outage, empty answer)
     "fallback_pools": [["nvidia/nemotron-3-ultra-550b-a55b:free", "thinkingmachines/inkling:free", "poolside/laguna-s-2.1:free"]],
+    # Google Gemini (free tier from AI Studio, a separate quota from OpenRouter). Used only if GEMINI_API_KEY is in env_file.
+    "gemini_models": ["gemini-2.5-flash", "gemini-2.5-flash-lite"],
     # PAID last resort, off by default (needs OpenRouter credit). Example: ["x-ai/grok-4.3"] in /etc/coinor/config.json
     "paid_models": [],
     "review_models": ["poolside/laguna-s-2.1:free", "google/gemma-4-26b-a4b-it:free"],
@@ -260,15 +262,62 @@ class Engine:
                 return line.split("=", 1)[1].strip().strip("\"'")
         raise RuntimeError("OPENROUTER_API_KEY not found")
 
+    def _env_value(self, name):
+        try:
+            for line in open(self.cfg["env_file"], encoding="utf-8").read().splitlines():
+                if line.startswith(name + "="):
+                    return line.split("=", 1)[1].strip().strip("\"'")
+        except OSError:
+            pass
+        return ""
+
+    def _gemini(self, system, user, max_tokens, model, timeout=240, temperature=0.9):
+        key = self._env_value("GEMINI_API_KEY")
+        if not key:
+            return None, "no gemini key"
+        def call(with_thinking_off):
+            gc = {"maxOutputTokens": max_tokens, "temperature": temperature}
+            if with_thinking_off:
+                gc["thinkingConfig"] = {"thinkingBudget": 0}
+            body = json.dumps({"systemInstruction": {"parts": [{"text": system}]},
+                               "contents": [{"role": "user", "parts": [{"text": user}]}], "generationConfig": gc}).encode()
+            req = urllib.request.Request(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", body,
+                                         {"Content-Type": "application/json", "x-goog-api-key": key})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read().decode("utf-8"))
+        try:
+            try:
+                d = call(True)
+            except urllib.error.HTTPError as e:
+                if e.code != 400:
+                    raise
+                d = call(False)                      # a model that rejects the thinking switch
+        except urllib.error.HTTPError as e:
+            return None, f"gemini http {e.code}"
+        except Exception as e:
+            return None, "gemini " + type(e).__name__
+        parts = (((d.get("candidates") or [{}])[0].get("content") or {}).get("parts")) or []
+        text = "".join(p.get("text", "") for p in parts if isinstance(p, dict)).strip()
+        return (text or None), ("google/" + model)
+
     def _real_llm(self, system, user, max_tokens, models=None, timeout=240, temperature=0.9):
         if models:                                   # a caller that names its models gets exactly those
             return self._openrouter(system, user, max_tokens, models, timeout, temperature)
         pools = [self.cfg["models"]] + [p for p in self.cfg.get("fallback_pools", []) if p]
+        if self.cfg.get("gemini_models") and self._env_value("GEMINI_API_KEY"):
+            pools.append(("gemini", self.cfg["gemini_models"]))
         if self.cfg.get("paid_models"):
             pools.append(self.cfg["paid_models"])
         text, used = None, "none"
         for i, pool in enumerate(pools):
-            text, used = self._openrouter(system, user, max_tokens, pool, timeout, temperature)
+            if isinstance(pool, tuple):                  # Gemini: one model per call, in order
+                for gm in pool[1]:
+                    text, used = self._gemini(system, user, max_tokens, gm, timeout, temperature)
+                    if text:
+                        break
+                    self.log("llm_pool_failed", pool="gemini:" + gm, why=used)
+            else:
+                text, used = self._openrouter(system, user, max_tokens, pool, timeout, temperature)
             if text:
                 if i:
                     self.log("llm_fallback_pool_used", pool=i, model=used)

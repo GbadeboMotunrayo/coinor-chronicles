@@ -14,6 +14,7 @@
 <meta property="og:url" content="https://coinorchonicles.space/">
 <meta property="og:site_name" content="CoinorChronicles">
 <link rel="stylesheet" href="styles.css">
+<script>(function(){var d=document.documentElement,w=function(){var x=innerWidth;d.setAttribute('data-screen',x<600?'phone':x<1024?'tablet':'desktop');d.setAttribute('data-touch',matchMedia('(pointer:coarse)').matches?'1':'0')};w();addEventListener('resize',w);addEventListener('orientationchange',w)})()</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"CoinorChronicles","alternateName":"The Book of Meme","url":"https://coinorchonicles.space/","description":"An ongoing fantasy saga set in the Realm of Coinor. Fiction, not financial advice.","inLanguage":"en"}</script>
 </head>
 <body>
@@ -59,16 +60,18 @@
       <a href="#/" data-route="home">Chronicle</a>
       <a href="/realm" data-route="realm">The Realm</a>
       <a href="/about" data-route="about">About</a>
+      <a href="/support">Support</a>
     </nav>
   </div>
 </header>
 <div id="preview-banner" class="preview" hidden>Preview mode: you are seeing sample episodes that are <strong>not published</strong>. Visitors do not see this.</div>
 <main id="app" tabindex="-1"><p class="muted">Opening the Book of Meme…</p></main>
+<div data-subscribe style="margin-bottom:26px"></div>
 <footer class="site-footer">
   <div>
     <p><strong>Fiction.</strong> The Realm of Coinor, its travellers and every episode are works of fiction that use public market data as story material. Nothing here is financial advice, a recommendation, or an offer. Markets are risky; do your own research.</p>
     <p>Episodes are written by AI and published automatically after they pass safety checks. No person reads each one first; a person can remove any episode.</p>
-    <p class="muted"><a href="/support">Support the journey</a> · A story project from MG Holdings. Market data: <a href="https://www.coingecko.com/en/api" rel="noopener">Powered by CoinGecko API</a>.</p>
+    <p class="muted"><a href="/support">Support the journey</a> · <a href="/privacy">Privacy</a> · A story project from MG Holdings. Market data: <a href="https://www.coingecko.com/en/api" rel="noopener">Powered by CoinGecko API</a>.</p>
   </div>
 </footer>
 </div></div>
@@ -76,5 +79,6 @@
 </div>
 <noscript><p class="wrap">This page needs JavaScript to open the Book of Meme.</p></noscript>
 <script src="app.js"></script>
+<script src="subscribe.js" defer></script>
 </body>
 </html>
