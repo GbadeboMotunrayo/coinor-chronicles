@@ -292,5 +292,66 @@ class Cycle(unittest.TestCase):
         self.assertEqual([e["number"] for e in self.feed()], [1, 2])
 
 
+class StaffControls(Cycle):
+    def setUp(self):
+        super().setUp()
+        t = self.tmp
+        self.cfg.update(direction_path=f"{t}/direction.json", inbox_dir=f"{t}/inbox", outbox_dir=f"{t}/outbox")
+        os.makedirs(self.cfg["inbox_dir"])
+
+    def req(self, name, **kw):
+        json.dump(kw, open(f"{self.cfg['inbox_dir']}/req-{name}.json", "w"))
+
+    def out(self, name):
+        return json.load(open(f"{self.cfg['outbox_dir']}/req-{name}.json"))
+
+    def test_direction_is_used_once_and_then_cleared(self):
+        self.req("a", verb="direction_set", by="maya", text="Let the Bazaar celebrate a quiet kindness between two travellers.")
+        self.engine().process_inbox()
+        self.assertTrue(self.out("a")["ok"])
+        self.run_()
+        self.assertIn("quiet kindness", self.calls[0])
+        self.assertFalse(os.path.exists(self.cfg["direction_path"]))
+        self.now += dt.timedelta(hours=5)
+        self.run_()
+        self.assertNotIn("quiet kindness", self.calls[-1])
+
+    def test_direction_does_not_bypass_the_rule_checker(self):
+        self.req("b", verb="direction_set", by="echo", text="Mention the price of Bitcoin in dollars and tell people to buy.")
+        self.engine().process_inbox()
+        self.llm_texts = [GOOD.replace("gold units", "dollars"), GOOD.replace("gold units", "dollars"), GOOD.replace("gold units", "dollars")]
+        self.run_()
+        self.assertEqual(self.feed() if os.path.exists(f"{self.tmp}/feed/episodes.json") else [], [])
+        self.assertTrue(os.path.exists(self.cfg["direction_path"]))     # not consumed by a failed run
+
+    def test_permissions_are_per_staff(self):
+        self.req("c", verb="unpublish", by="raven", number=1)
+        self.req("d", verb="pause_on", by="echo")
+        self.req("e", verb="pause_on", by="stranger")
+        self.req("f", verb="pause_on", by="prometheus")
+        self.engine().process_inbox()
+        self.assertFalse(self.out("c")["ok"]); self.assertFalse(self.out("d")["ok"]); self.assertFalse(self.out("e")["ok"])
+        self.assertTrue(self.out("f")["ok"]); self.assertTrue(os.path.exists(self.cfg["pause_file"]))
+        self.assertEqual(os.listdir(self.cfg["inbox_dir"]), [])
+
+    def test_unpublish_and_resume_by_maya(self):
+        self.run_()
+        self.assertEqual(len(self.feed()), 1)
+        self.req("g", verb="unpublish", by="maya", number=1)
+        self.engine().process_inbox()
+        self.assertEqual(self.feed(), [])
+        self.req("h", verb="pause_on", by="maya"); self.engine().process_inbox()
+        self.req("i", verb="pause_off", by="maya"); self.engine().process_inbox()
+        self.assertFalse(os.path.exists(self.cfg["pause_file"]))
+
+    def test_junk_requests_are_answered_not_fatal(self):
+        open(f"{self.cfg['inbox_dir']}/req-j.json", "w").write("{not json")
+        open(f"{self.cfg['inbox_dir']}/other.txt", "w").write("x")
+        self.req("k", verb="direction_set", by="maya", text="hi")
+        self.engine().process_inbox()
+        self.assertFalse(self.out("j")["ok"]); self.assertFalse(self.out("k")["ok"])
+        self.assertTrue(os.path.exists(f"{self.cfg['inbox_dir']}/other.txt"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

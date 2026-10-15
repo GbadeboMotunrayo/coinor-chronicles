@@ -32,6 +32,9 @@ DEFAULT_CFG = {
     "cache_dir": "/var/lib/coinor/cache",
     "log_path": "/var/log/coinor/run.log",
     "pause_file": "/etc/coinor/PAUSE",
+    "direction_path": "/var/lib/coinor/direction.json",   # one-shot story direction from staff, used by the next story
+    "inbox_dir": "/var/lib/coinor/inbox",                 # staff drop request files here (see process_inbox)
+    "outbox_dir": "/var/lib/coinor/outbox",
     "env_file": "/home/hermes/.hermes/.env",
     "daily_cap": 2,
     "min_gap_hours": 4,
@@ -413,13 +416,16 @@ class Engine:
             system_extra = guide["celebration"]
         else:
             mode = "story"
+            direction = self.read_direction()
+            override = (direction + " (blend this in naturally; every style rule still applies)") if direction else "None - generate naturally from market data"
             prompt = (f"SELECTED_CLAN: {clan['name']} - {clan['territory']}\nMARKET_CONDITION: {CONDITION_NAMES[cond]}\nMARKET_DATA:\n{coin_lines}\n"
                       f"LAST_EPISODE_SUMMARY: {mem['summary']}\nSTORY_DIRECTION: {mem['direction']}\nCURRENT_HEAVENS:\n{heaven_lines}\n"
-                      f"CREATOR_OVERRIDE: None - generate naturally from market data\nSTORY_COUNT: {episode}\n\nNow write the episode following all rules in the style guide.{memory_rule}")
+                      f"CREATOR_OVERRIDE: {override}\nSTORY_COUNT: {episode}\n\nNow write the episode following all rules in the style guide.{memory_rule}")
             system_extra = guide["script_generator"]
         system = "You are the official story narrator of CoinorChronicles.\n\n" + system_extra + "\n\n" + guide["style_guide"]
         return {"mode": mode, "clanKey": clan_key, "clan_name": clan["name"], "episode": episode, "condition": cond,
-                "prompt": prompt, "system": system, "candidates": cands, "celebration": cel, "first_run": first_run}
+                "prompt": prompt, "system": system, "candidates": cands, "celebration": cel, "first_run": first_run,
+                "direction": bool(mode == "story" and direction)}
 
     def commit(self, S, plan, prices, title, body, scene, mem, checks):
         for m in plan["candidates"]:
@@ -455,6 +461,116 @@ class Engine:
         return "unavailable", text
 
     # --- main cycle
+    # --- staff controls (the only things the digital staff may do) ------------------
+    def read_direction(self):
+        d = self._read_json(self.cfg["direction_path"], None)
+        t = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f]", " ", str((d or {}).get("text", "")))).strip()
+        return t[:280]
+
+    def set_pause(self, on):
+        pf = self.cfg["pause_file"]
+        if on:
+            os.makedirs(os.path.dirname(pf), exist_ok=True)
+            open(pf, "w").write("paused " + dt.datetime.now().isoformat() + "\n")
+            return "PAUSED: no episodes will be published until resumed."
+        try:
+            os.remove(pf)
+        except FileNotFoundError:
+            pass
+        return "Resumed."
+
+    def unpublish(self, number):
+        path = os.path.join(self.cfg["feed_dir"], "episodes.json")
+        feed = self._read_json(path, {"episodes": []})
+        keep = [e for e in feed["episodes"] if e.get("number") != number]
+        if len(keep) == len(feed["episodes"]):
+            raise ValueError(f"Episode {number} is not in the feed.")
+        feed["episodes"] = keep
+        feed["updated"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+        self._write_json(path, feed)
+        return f"Episode {number} removed from the feed."
+
+    def status(self):
+        cfg = self.cfg
+        S = self._read_json(cfg["state_path"], {})
+        feed = self._read_json(os.path.join(cfg["feed_dir"], "episodes.json"), {"episodes": []})
+        now = dt.datetime.now(dt.timezone.utc)
+        today = [x for x in S.get("published_at", []) if x[:10] == now.date().isoformat()]
+        return {"paused": os.path.exists(cfg["pause_file"]), "episodes_in_feed": len(feed.get("episodes", [])),
+                "published_today": len(today), "daily_cap": cfg["daily_cap"], "last_run": self._read_json(cfg["last_run_path"], {}),
+                "episode_counter": S.get("episode"), "pending_direction": self.read_direction() or None}
+
+    # who may ask for what. The actor name is an audit label, not authentication: the inbox is only
+    # reachable from those staff sandboxes, and nothing here can publish, edit text, or skip a rule check.
+    PERMS = {"maya": {"status", "pause_on", "pause_off", "unpublish", "direction_set", "direction_clear"},
+             "prometheus": {"status", "pause_on", "pause_off"},
+             "raven": {"status", "direction_set", "direction_clear"},
+             "echo": {"status", "direction_set", "direction_clear"}}
+
+    def process_inbox(self):
+        cfg = self.cfg
+        inbox, outbox = cfg["inbox_dir"], cfg["outbox_dir"]
+        os.makedirs(outbox, exist_ok=True)
+        done_n = 0
+        try:
+            names = sorted(os.listdir(inbox))
+        except OSError:
+            return 0
+        for fn in names:
+            path = os.path.join(inbox, fn)
+            if not re.fullmatch(r"req-[0-9A-Za-z_.-]{1,60}\.json", fn):
+                continue
+            res = {"id": fn, "ok": False, "at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")}
+            try:
+                if os.path.getsize(path) > 4096:
+                    raise ValueError("request too large")
+                req = json.load(open(path, encoding="utf-8"))
+                verb = str(req.get("verb", ""))
+                actor = re.sub(r"[^a-z]", "", str(req.get("by", "")).lower())[:20]
+                res.update(verb=verb, by=actor)
+                if verb not in self.PERMS.get(actor, ()):
+                    raise PermissionError(f"{actor or 'unknown'} may not {verb or 'do that'}")
+                if verb == "status":
+                    res["status"] = self.status(); res["message"] = "ok"
+                elif verb == "pause_on":
+                    res["message"] = self.set_pause(True)
+                elif verb == "pause_off":
+                    res["message"] = self.set_pause(False)
+                elif verb == "unpublish":
+                    res["message"] = self.unpublish(int(req.get("number")))
+                elif verb == "direction_set":
+                    t = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f]", " ", str(req.get("text", "")))).strip()[:280]
+                    if len(t) < 8:
+                        raise ValueError("direction text is too short")
+                    self._write_json(cfg["direction_path"], {"text": t, "by": actor, "at": res["at"]})
+                    res["message"] = "Direction saved. The next story will use it once."
+                elif verb == "direction_clear":
+                    try:
+                        os.remove(cfg["direction_path"])
+                    except OSError:
+                        pass
+                    res["message"] = "Direction cleared."
+                res["ok"] = True
+                if verb != "status":
+                    self._notify(f"Coinor: {actor} used {verb}. {res['message']}")
+            except Exception as e:                       # a bad request is answered, never fatal
+                res["message"] = f"{type(e).__name__}: {e}"
+            self.log("inbox_request", **{k: res.get(k) for k in ("id", "verb", "by", "ok", "message")})
+            self._write_json(os.path.join(outbox, fn), res, mode=0o644)
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+            done_n += 1
+        for fn in os.listdir(outbox):                    # outbox keeps one week
+            fp = os.path.join(outbox, fn)
+            if time.time() - os.path.getmtime(fp) > 7 * 86400:
+                try:
+                    os.remove(fp)
+                except OSError:
+                    pass
+        return done_n
+
     def run(self, dry_run=False):
         cfg = self.cfg
         t0 = self.now()
@@ -533,6 +649,11 @@ class Engine:
             self.commit(S, plan, prices, title, body, scene, mem, checks)
             self._write_json(feed_path, feed)       # feed first, then state: a crash re-publishes rather than skips
             self._write_json(cfg["state_path"], S)
+            if plan.get("direction"):
+                try:
+                    os.remove(cfg["direction_path"])     # a direction is used once
+                except OSError:
+                    pass
             self._notify(f"Chronicle published: Episode {ep['number']}, \"{title}\".\n{cfg['site_url']}/#/episode/{ep['number']}\n"
                          f"Checks: rules passed (enforced in code), second-opinion review: {verdict}. To take it down: coinor.py unpublish {ep['number']}")
             return done("published", episode=ep["number"], title=title, clan=plan["clanKey"], checks=checks)
@@ -558,41 +679,34 @@ def main(argv=None):
     sub.add_parser("status")
     p = sub.add_parser("pause"); p.add_argument("state", choices=["on", "off"])
     u = sub.add_parser("unpublish"); u.add_argument("number", type=int)
+    sub.add_parser("process-inbox")
+    d = sub.add_parser("direction"); d.add_argument("action", choices=["set", "clear"]); d.add_argument("text", nargs="?", default="")
     a = ap.parse_args(argv)
     cfg = load_cfg()
     eng = Engine(cfg)
     if a.cmd == "run":
         eng.run(dry_run=a.dry_run)
     elif a.cmd == "status":
-        S = eng._read_json(cfg["state_path"], {})
-        feed = eng._read_json(os.path.join(cfg["feed_dir"], "episodes.json"), {"episodes": []})
-        last = eng._read_json(cfg["last_run_path"], {})
-        now = dt.datetime.now(dt.timezone.utc)
-        today = [x for x in S.get("published_at", []) if x[:10] == now.date().isoformat()]
-        print(json.dumps({"paused": os.path.exists(cfg["pause_file"]), "episodes_in_feed": len(feed.get("episodes", [])),
-                          "published_today": len(today), "daily_cap": cfg["daily_cap"], "last_run": last,
-                          "episode_counter": S.get("episode")}, indent=2))
+        print(json.dumps(eng.status(), indent=2))
     elif a.cmd == "pause":
-        if a.state == "on":
-            os.makedirs(os.path.dirname(cfg["pause_file"]), exist_ok=True)
-            open(cfg["pause_file"], "w").write("paused " + dt.datetime.now().isoformat() + "\n")
-            print("PAUSED: no episodes will be published until: coinor.py pause off")
+        print(eng.set_pause(a.state == "on"))
+    elif a.cmd == "unpublish":
+        try:
+            print(eng.unpublish(a.number))
+        except ValueError as e:
+            sys.exit(str(e))
+    elif a.cmd == "process-inbox":
+        eng.process_inbox()
+    elif a.cmd == "direction":
+        if a.action == "set":
+            eng._write_json(cfg["direction_path"], {"text": a.text, "by": "cli", "at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")})
+            print("Direction saved for the next story.")
         else:
             try:
-                os.remove(cfg["pause_file"])
-            except FileNotFoundError:
+                os.remove(cfg["direction_path"])
+            except OSError:
                 pass
-            print("Resumed.")
-    elif a.cmd == "unpublish":
-        path = os.path.join(cfg["feed_dir"], "episodes.json")
-        feed = eng._read_json(path, {"episodes": []})
-        keep = [e for e in feed["episodes"] if e.get("number") != a.number]
-        if len(keep) == len(feed["episodes"]):
-            sys.exit(f"Episode {a.number} is not in the feed.")
-        feed["episodes"] = keep
-        feed["updated"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-        eng._write_json(path, feed)
-        print(f"Episode {a.number} removed from the feed.")
+            print("Direction cleared.")
 
 
 if __name__ == "__main__":
