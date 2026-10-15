@@ -8,14 +8,14 @@ import json, sys
 SSH_CRED = {"sshPrivateKey": {"id": "MX558Fm6uLy3U0KX", "name": "SSH Private Key account"}}
 test_at = sys.argv[sys.argv.index("--test-at") + 1] if "--test-at" in sys.argv else None
 
-rules = [{"field": "cronExpression", "expression": "0 6,18 * * *"}]
+rules = [{"field": "cronExpression", "expression": "0 0,6,12,18 * * *"}]
 if test_at:
     rules.append({"field": "cronExpression", "expression": test_at + " *"})
 
 nodes = [
-    {"parameters": {"content": "## CoinorChronicles v3 - Auto Publish\nRuns the engine at **06:00 and 18:00 Lagos time**: up to **2 episodes a day** (the engine enforces the cap, a 4-hour gap, and skips flat markets).\n\nAll logic lives in `/usr/local/lib/coinor/coinor.py` on the server (tested: 35 tests). Every episode must pass the rule checker in code before it is published to the feed. If the engine crashes, this workflow raises an alert.\n\n**Kill switch:** `python3 /usr/local/lib/coinor/coinor.py pause on`", "width": 440, "height": 240},
+    {"parameters": {"content": "## CoinorChronicles v3 - Auto Publish\nRuns the engine at **00:00, 06:00, 12:00 and 18:00 Lagos time**: up to **4 episodes a day** (the engine enforces the cap, a 4-hour gap, and skips flat markets).\n\nAll logic lives in `/usr/local/lib/coinor/coinor.py` on the server (tested: 55+ tests). Every episode must pass the rule checker in code before it is published to the feed. If the engine crashes, this workflow raises an alert.\n\n**Kill switch:** `python3 /usr/local/lib/coinor/coinor.py pause on`", "width": 440, "height": 240},
      "id": "note", "name": "note", "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [-40, -140]},
-    {"parameters": {"rule": {"interval": rules}}, "id": "trig", "name": "Twice Daily", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 200]},
+    {"parameters": {"rule": {"interval": rules}}, "id": "trig", "name": "Four Times Daily", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.2, "position": [0, 200]},
     {"parameters": {"authentication": "privateKey", "command": "python3 /usr/local/lib/coinor/coinor.py run"},
      "id": "ssh", "name": "Run Coinor Engine", "type": "n8n-nodes-base.ssh", "typeVersion": 1, "position": [260, 200], "credentials": SSH_CRED},
     {"parameters": {"conditions": {"options": {"caseSensitive": True, "leftValue": "", "typeValidation": "loose", "version": 2},
@@ -26,7 +26,7 @@ nodes = [
     {"parameters": {}, "id": "ok", "name": "Done", "type": "n8n-nodes-base.noOp", "typeVersion": 1, "position": [780, 300]},
 ]
 conn = {
-    "Twice Daily": {"main": [[{"node": "Run Coinor Engine", "type": "main", "index": 0}]]},
+    "Four Times Daily": {"main": [[{"node": "Run Coinor Engine", "type": "main", "index": 0}]]},
     "Run Coinor Engine": {"main": [[{"node": "Engine Crashed?", "type": "main", "index": 0}]]},
     "Engine Crashed?": {"main": [[{"node": "Raise Alert", "type": "main", "index": 0}], [{"node": "Done", "type": "main", "index": 0}]]},
 }

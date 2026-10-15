@@ -7,7 +7,7 @@ Live: https://coinorchonicles.space  ·  Built 15 Oct 2026.
 ## How it works (no human in the loop)
 
 ```
-n8n schedule 06:00 and 18:00 (Africa/Lagos)
+n8n schedule 00:00, 06:00, 12:00 and 18:00 (Africa/Lagos)
    -> SSH to VPS: python3 /usr/local/lib/coinor/coinor.py run
         - fetches the day's market facts, picks the clan, writes the episode
         - deterministic safety checks in code (banned words, real names, length, lore rules)
@@ -18,7 +18,7 @@ n8n schedule 06:00 and 18:00 (Africa/Lagos)
    -> this site fetches the feed on load and every 5 minutes (cached copy if the feed is down)
 ```
 
-**Rate:** at most 2 episodes a day (cap in code), at least 4 hours apart, and none when the realm is flat.
+**Rate:** at most 4 episodes a day (cap in code, changed from 2 on 15 Oct 2026), at least 4 hours apart, and none when the realm is flat.
 It is a script on a schedule, not an AI agent that decides things; the AI only writes the text.
 
 ## Kill switch and removal (on the VPS)
@@ -38,13 +38,22 @@ which also alerts if the engine has not run for 14 hours, or the feed or this si
 
 | File | Public? | Purpose |
 |---|---|---|
-| `index.html`, `styles.css`, `app.js` | yes | the site (aged-scroll design; text-only DOM insertion) |
+| `index.html`, `styles.css`, `app.js` | yes | the home page (aged-scroll design and map; text-only DOM insertion) |
+| `lib.php`, `episode.php`, `clan.php`, `realm.php`, `about.php`, `sitemap.php`, `.htaccess`, `favicon.svg` | yes (`lib.php` blocked from the web) | **SEO pages**: real URLs and real HTML for every episode (`/episode/N`), clan (`/clan/KEY`), `/realm`, `/about` and `/sitemap.xml` |
+| `router_test.php` | **no** | local test helper for `php -S` |
 | `episodes.json` | yes | fallback copy, empty; the live feed is on the VPS |
 | `robots.txt` | yes | allow search engines |
 | `episodes.sample.json` | **no, laptop only** | unapproved sample, visible locally with `?preview=1` |
 | `publish_episode.py` | **no** | old manual publisher, kept for emergencies |
 
-Deploy: upload `index.html`, `styles.css`, `app.js` to `public_html` (Hostinger TUS upload). `episodes.json` need not change.
+## SEO (added 15 Oct 2026)
+
+- Each episode has its own URL, `<title>`, description (first lines of the story), canonical link, Open Graph tags and `Article` structured data. The pages are PHP on the shared host: they fetch the public feed from the VPS, cache it for 5 minutes, and keep serving the last copy if the VPS is down. New episodes get a page and a sitemap entry without anyone touching the site.
+- `robots.txt` points to `/sitemap.xml`. **One step is the owner's**: add the site in Google Search Console and submit the sitemap. That cannot be automated here.
+- Keywords belong in page titles, descriptions and the realm and clan pages. They never go inside an episode: the story rules (no real coins or places, no finance words) are unchanged.
+- Limit: the home page (`index.html`) builds its list in the browser. Search engines that run JavaScript see it, and the sitemap lists every episode regardless.
+
+Deploy: upload the changed files to `public_html` (Hostinger TUS upload). `episodes.json` need not change.
 
 ## Honest-by-design
 

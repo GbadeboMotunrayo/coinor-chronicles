@@ -248,6 +248,7 @@ class Cycle(unittest.TestCase):
         self.assertEqual((r["outcome"], r["checks"]["model_review"]), ("published", "unavailable"))
 
     def test_daily_cap_and_min_gap(self):
+        self.cfg["daily_cap"] = 2
         self.assertEqual(self.run_()["outcome"], "published")
         self.now += dt.timedelta(hours=1)
         self.assertEqual(self.run_()["outcome"], "skipped_gap")
@@ -290,6 +291,20 @@ class Cycle(unittest.TestCase):
         self.llm_texts = [GOOD.replace("Holds Its Breath", "Waits For Dawn")]
         self.run_()
         self.assertEqual([e["number"] for e in self.feed()], [1, 2])
+
+
+class FourADay(Cycle):
+    def test_default_cap_is_four_and_the_fifth_is_refused(self):
+        self.assertEqual(self.cfg["daily_cap"], 4)
+        names = ["Waits For Dawn", "Rises Again", "Counts The Stars", "Keeps The Fire"]
+        outs = []
+        for i, nm in enumerate(names):
+            self.llm_texts = [GOOD.replace("Holds Its Breath", nm)]
+            outs.append(self.run_()["outcome"])
+            self.now += dt.timedelta(hours=5)
+        self.assertEqual(outs, ["published"] * 4)
+        self.now = dt.datetime(2026, 10, 16, 23, 30, tzinfo=dt.timezone.utc)
+        self.assertEqual(self.run_()["outcome"], "skipped_cap")
 
 
 class StaffControls(Cycle):

@@ -71,17 +71,110 @@
   function show(nodes, title, route) {
     app.textContent = '';
     nodes.forEach(function (n) { if (n) app.appendChild(n); });
-    setTitle(title); setNav(route);
+    setTitle(title); setNav(route); setWeather();
     var h1 = app.querySelector('h1'); if (h1) { h1.setAttribute('tabindex', '-1'); }
     window.scrollTo(0, 0);
     if (h1) h1.focus({ preventScroll: true });
   }
   function link(hash) { return hash + (preview ? '' : ''); }
 
+
+  /* ---------- the living map ---------- */
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  function svg(tag, attrs, kids) {
+    var n = document.createElementNS(SVGNS, tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) { if (k === 'text') n.textContent = attrs[k]; else n.setAttribute(k, attrs[k]); });
+    (kids || []).forEach(function (c) { if (c) n.appendChild(c); });
+    return n;
+  }
+  // three cubic segments from the Citadel to the Golden Gate
+  var SEG = [
+    [[40, 232], [120, 120], [200, 262], [300, 172]],
+    [[300, 172], [400, 82], [470, 176], [560, 122]],
+    [[560, 122], [640, 70], [700, 112], [748, 66]]
+  ];
+  var ROUTE_D = 'M40 232C120 120 200 262 300 172C400 82 470 176 560 122C640 70 700 112 748 66';
+  var STOPS = [[0, .0], [0, .42], [0, .8], [1, .2], [1, .5], [1, .8], [2, .2], [2, .45], [2, .7], [2, .92]];
+  function bez(s, t) {
+    var u = 1 - t;
+    return [0, 1].map(function (i) {
+      return u * u * u * s[0][i] + 3 * u * u * t * s[1][i] + 3 * u * t * t * s[2][i] + t * t * t * s[3][i];
+    });
+  }
+  function stopPoint(i) { return bez(SEG[STOPS[i][0]], STOPS[i][1]); }
+
+  function roadMap(list) {
+    var asc = list.slice(0, 10).sort(function (a, b) { return a.number - b.number; });
+    var latest = list[0];
+    var kids = [
+      svg('rect', { x: 8, y: 8, width: 784, height: 264, rx: 10, class: 'ground' }),
+      svg('path', { d: ROUTE_D, class: 'route-bg' }),
+      svg('path', { d: ROUTE_D, class: 'route' })
+    ];
+    STOPS.forEach(function (s, i) { var p = stopPoint(i); kids.push(svg('circle', { cx: p[0].toFixed(1), cy: p[1].toFixed(1), r: 4, class: 'stop' })); });
+    [['The Obsidian Citadel', 22, 258], ['The Electric Plains', 200, 292 - 150], ['Kekiston Bazaar', 392, 204], ['The Forge of Chains', 560, 160]].forEach(function (pl) {
+      kids.push(svg('text', { x: pl[1], y: pl[2], class: 'place', text: pl[0] }));
+    });
+    kids.push(svg('ellipse', { cx: 748, cy: 62, rx: 46, ry: 40, class: 'gate-glow' }));
+    kids.push(svg('path', { d: 'M734 82V58a14 14 0 0 1 28 0v24', class: 'gate-arch' }));
+    kids.push(svg('text', { x: 790, y: 112, 'text-anchor': 'end', class: 'gate-name', text: 'The Golden Gate' }));
+    asc.forEach(function (e) {
+      var p = stopPoint((e.number - 1) % 10);
+      var isLatest = latest && e.number === latest.number;
+      kids.push(svg('a', { href: '/episode/' + e.number, class: 'pin clan-' + e.clan + (isLatest ? ' latest' : ''), 'aria-label': 'Episode ' + e.number + ': ' + e.title },
+        [svg('title', { text: 'Episode ' + e.number + ' · ' + e.title }),
+         isLatest ? svg('circle', { cx: p[0].toFixed(1), cy: p[1].toFixed(1), r: 11, class: 'halo' }) : null,
+         svg('circle', { cx: p[0].toFixed(1), cy: p[1].toFixed(1), r: 11, class: 'dot' }),
+         svg('text', { x: p[0].toFixed(1), y: (p[1] + 3.6).toFixed(1), 'text-anchor': 'middle', text: String(e.number) })]));
+    });
+    var map = svg('svg', { viewBox: '0 0 800 280', role: 'img', 'aria-label': 'A map of the road from the Obsidian Citadel to the Golden Gate, with a marker for each recent chapter' }, kids);
+    return el('section', { class: 'road' }, [
+      el('h2', { text: 'The road to the Golden Gate' }), map,
+      el('p', { class: 'legend', text: list.length ? 'Each marker is a chapter. Choose one to read it. The glowing marker is the newest.' : 'No chapter has been written yet. The first marker will appear here.' })
+    ]);
+  }
+
+  function setWeather() {
+    var l = visible()[0];
+    var w = l && l.condition === 'dark_siege' ? 'siege' : l && l.condition === 'golden_season' ? 'golden' : 'calm';
+    document.body.setAttribute('data-weather', w);
+  }
+
+  function embers() {
+    var cv = document.getElementById('embers');
+    if (!cv || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    var cx = cv.getContext('2d'), W = 0, H = 0, ps = [], raf = 0;
+    function size() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+    size(); addEventListener('resize', size);
+    var N = innerWidth < 640 ? 22 : 42;
+    function spawn(p, fresh) {
+      p.x = Math.random() * W; p.y = fresh ? H + 10 : Math.random() * H; p.r = .6 + Math.random() * 1.8;
+      p.v = .15 + Math.random() * .5; p.d = (Math.random() - .5) * .3; p.a = .2 + Math.random() * .6; p.t = Math.random() * 6.28;
+      return p;
+    }
+    for (var i = 0; i < N; i++) ps.push(spawn({}, false));
+    function frame() {
+      cx.clearRect(0, 0, W, H);
+      var w = document.body.getAttribute('data-weather');
+      var col = w === 'siege' ? '150,180,235' : '255,190,90';
+      ps.forEach(function (p) {
+        p.t += .02; p.y -= p.v * (w === 'siege' ? 1.8 : 1); p.x += p.d + Math.sin(p.t) * .25;
+        if (p.y < -10) spawn(p, true);
+        cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.283);
+        cx.fillStyle = 'rgba(' + col + ',' + (p.a * (.6 + .4 * Math.sin(p.t * 2))).toFixed(3) + ')'; cx.fill();
+      });
+      raf = requestAnimationFrame(frame);
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) cancelAnimationFrame(raf); else raf = requestAnimationFrame(frame);
+    });
+    raf = requestAnimationFrame(frame);
+  }
+
   /* ---------- views ---------- */
   function card(e) {
     var clan = CLANS[e.clan] || { name: '' };
-    var a = el('a', { class: 'card clan-' + e.clan, href: '#/episode/' + e.number }, [
+    var a = el('a', { class: 'card clan-' + e.clan, href: '/episode/' + e.number }, [
       el('span', { class: 'seal', 'aria-hidden': 'true', text: String(e.number) }),
       el('p', { class: 'meta' }, [
         el('span', { class: 'tag', text: 'Episode ' + e.number }),
@@ -106,12 +199,12 @@
       el('p', { class: 'lede', text: 'A living chronicle of travellers who chase Golden Gates across a realm that never stops moving. New chapters arrive as the markets turn.' }),
       gates
     ]);
-    var nodes = [hero];
+    var nodes = [hero, roadMap(list)];
 
     if (!list.length) {
       nodes.push(el('div', { class: 'empty' }, [
         el('h2', { text: 'The first chronicle is being written', style: 'margin-top:0' }),
-        el('p', { text: 'New chapters appear here by themselves as the realm moves, usually twice a day. Check back soon.' }),
+        el('p', { text: 'New chapters appear here by themselves as the realm moves, up to four times a day. Check back soon.' }),
         el('p', {}, [el('a', { href: '#/realm', text: 'Meet the clans meanwhile' })])
       ]));
       return show(nodes, '', 'home');
@@ -201,7 +294,7 @@
     show([
       el('p', { class: 'eyebrow', text: 'About' }),
       el('h1', { text: 'How the Book is written' }),
-      el('p', { text: 'CoinorChronicles turns real market movement into an unfolding fantasy saga. When the markets move, a new chapter is drafted with the help of AI, using a fixed style guide and the live price data as story material.' }),
+      el('p', { text: 'CoinorChronicles turns real market movement into an unfolding fantasy saga. When the markets move, a new chapter is drafted with the help of AI, using a fixed style guide and the live price data as story material. New chapters can appear up to four times a day.' }),
       el('h2', { text: 'It runs by itself, with safety checks' }),
       el('p', { text: 'No person reads each chapter before it appears. Instead, every draft must pass a set of automatic checks in code: a fixed length and structure, in-world language only, no real-world names, no finance terms, no advice, no links or wallet addresses. If a draft fails, it is rewritten, and if it still fails, nothing is published. A person watches the system and can remove any chapter at any time.' }),
       el('h2', { text: 'What this is not' }),
@@ -222,6 +315,7 @@
     show([el('h1', { text: 'That path is not on the map' }), el('p', {}, [el('a', { href: '#/', text: 'Back to the chronicle' })])], 'Not found', 'home');
   }
 
+  embers();
   if (preview) document.getElementById('preview-banner').hidden = false;
   var FEED_URL = 'https://coinor.2-24-128-252.sslip.io/feed/episodes.json';
   var CACHE_KEY = 'coinor_feed_v1';

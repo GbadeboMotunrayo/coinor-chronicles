@@ -1,0 +1,12 @@
+Options -Indexes
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+RewriteRule ^episode/([0-9]+)/?$ episode.php?n=$1 [L,QSA]
+RewriteRule ^clan/([a-z_]+)/?$ clan.php?k=$1 [L,QSA]
+RewriteRule ^realm/?$ realm.php [L]
+RewriteRule ^about/?$ about.php [L]
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+<FilesMatch "^lib\.php$">
+  Require all denied
+</FilesMatch>
