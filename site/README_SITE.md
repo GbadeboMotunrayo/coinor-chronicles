@@ -7,7 +7,7 @@ Live: https://coinorchonicles.space  ·  Built 15 Oct 2026.
 ## How it works (no human in the loop)
 
 ```
-n8n schedule 00:00, 06:00, 12:00 and 18:00 (Africa/Lagos)
+n8n schedule 06:00 and 18:00 (Africa/Lagos)
    -> SSH to VPS: python3 /usr/local/lib/coinor/coinor.py run
         - fetches the day's market facts, picks the clan, writes the episode
         - deterministic safety checks in code (banned words, real names, length, lore rules)
@@ -18,7 +18,7 @@ n8n schedule 00:00, 06:00, 12:00 and 18:00 (Africa/Lagos)
    -> this site fetches the feed on load and every 5 minutes (cached copy if the feed is down)
 ```
 
-**Rate:** at most 4 episodes a day (cap in code, changed from 2 on 15 Oct 2026), at least 4 hours apart, and none when the realm is flat.
+**Rate:** at most 2 episodes a day (cap in code; briefly 4 on 15 Oct 2026, set back because the free model tier cannot sustain 4), at least 4 hours apart, and none when the realm is flat.
 It is a script on a schedule, not an AI agent that decides things; the AI only writes the text.
 
 ## Kill switch and removal (on the VPS)
@@ -32,7 +32,7 @@ It is a script on a schedule, not an AI agent that decides things; the AI only w
 | Dry run (writes nothing) | `python3 /usr/local/lib/coinor/coinor.py run --dry-run` |
 
 Logs: `/var/log/coinor/run.log`. Failures send a Telegram alert (n8n error workflow and the 15-minute watchdog,
-which also alerts if the engine has not run for 8 hours, or the feed or this site is unreachable).
+which also alerts if the engine has not run for 14 hours, or the feed or this site is unreachable).
 
 ## Files
 

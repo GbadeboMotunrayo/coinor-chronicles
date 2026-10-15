@@ -132,7 +132,7 @@ function page_close() {
 <footer class="site-footer"><div>
 <p><strong>Fiction.</strong> The Realm of Coinor, its travellers and every episode are works of fiction that use public market data as story material. Nothing here is financial advice, a recommendation, or an offer. Markets are risky; do your own research.</p>
 <p>Episodes are written by AI and published automatically after they pass safety checks. No person reads each one first; a person can remove any episode.</p>
-<p class="muted">A story project from MG Holdings. Market data: <a href="https://www.coingecko.com/en/api" rel="noopener">Powered by CoinGecko API</a>.</p>
+<p class="muted"><a href="/support">Support the journey</a> · A story project from MG Holdings. Market data: <a href="https://www.coingecko.com/en/api" rel="noopener">Powered by CoinGecko API</a>.</p>
 </div></footer>
 </div></div><div class="rod bottom" aria-hidden="true"></div></div>
 </body></html>

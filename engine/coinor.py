@@ -36,7 +36,7 @@ DEFAULT_CFG = {
     "inbox_dir": "/var/lib/coinor/inbox",                 # staff drop request files here (see process_inbox)
     "outbox_dir": "/var/lib/coinor/outbox",
     "env_file": "/home/hermes/.hermes/.env",
-    "daily_cap": 4,
+    "daily_cap": 2,
     "min_gap_hours": 4,
     "max_attempts": 3,
     "keep_episodes": 500,

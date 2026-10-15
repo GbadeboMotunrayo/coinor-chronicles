@@ -293,16 +293,16 @@ class Cycle(unittest.TestCase):
         self.assertEqual([e["number"] for e in self.feed()], [1, 2])
 
 
-class FourADay(Cycle):
-    def test_default_cap_is_four_and_the_fifth_is_refused(self):
-        self.assertEqual(self.cfg["daily_cap"], 4)
-        names = ["Waits For Dawn", "Rises Again", "Counts The Stars", "Keeps The Fire"]
+class TwoADay(Cycle):
+    def test_default_cap_is_two_and_the_third_is_refused(self):
+        self.assertEqual(self.cfg["daily_cap"], 2)
+        names = ["Waits For Dawn", "Rises Again"]
         outs = []
         for i, nm in enumerate(names):
             self.llm_texts = [GOOD.replace("Holds Its Breath", nm)]
             outs.append(self.run_()["outcome"])
             self.now += dt.timedelta(hours=5)
-        self.assertEqual(outs, ["published"] * 4)
+        self.assertEqual(outs, ["published"] * 2)
         self.now = dt.datetime(2026, 10, 16, 23, 30, tzinfo=dt.timezone.utc)
         self.assertEqual(self.run_()["outcome"], "skipped_cap")
 

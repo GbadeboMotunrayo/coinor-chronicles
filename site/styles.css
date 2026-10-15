@@ -175,3 +175,14 @@ body[data-weather="siege"] .realm-bg::before{content:"";position:absolute;inset:
   #embers{display:none}
 }
 @media (max-width:640px){.road .place{font-size:17px}.road .gate-name{font-size:14px}.road .pin text{font-size:12px}.road .pin circle.dot,.road .latest circle.halo{r:13}}
+
+/* ---------- support page ---------- */
+.wallets{display:grid;gap:14px;margin-top:10px}
+.wallet{display:grid;grid-template-columns:132px 1fr;gap:6px 18px;align-items:start;padding:16px 4px;border-top:1px solid var(--rule)}
+.wallet:first-child{border-top:0}
+.wallet-qr img{display:block;width:120px;height:120px;border:1px solid var(--rule);border-radius:4px;background:#f3e6c4}
+.wallet-info h3{margin:0}
+.wallet-info .where{font-family:var(--sans);font-size:.76rem;letter-spacing:.04em;color:var(--ink-2);margin:2px 0 8px;text-transform:none}
+.addr{display:block;font:500 .82rem/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;background:rgba(90,60,25,.08);border:1px solid var(--rule);border-radius:4px;padding:8px 10px;margin-bottom:8px;user-select:all}
+.care{color:var(--ink-2)}.care li{margin:.35em 0}
+@media (max-width:640px){.wallet{grid-template-columns:1fr}.wallet-qr img{width:104px;height:104px}}

@@ -5,7 +5,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## CoinorChronicles v3 - Auto Publish\nRuns the engine at **00:00, 06:00, 12:00 and 18:00 Lagos time**: up to **4 episodes a day** (the engine enforces the cap, a 4-hour gap, and skips flat markets).\n\nAll logic lives in `/usr/local/lib/coinor/coinor.py` on the server (tested: 55+ tests). Every episode must pass the rule checker in code before it is published to the feed. If the engine crashes, this workflow raises an alert.\n\n**Kill switch:** `python3 /usr/local/lib/coinor/coinor.py pause on`",
+        "content": "## CoinorChronicles v3 - Auto Publish\nRuns the engine at **06:00 and 18:00 Lagos time**: up to **2 episodes a day** (the engine enforces the cap, a 4-hour gap, and skips flat markets).\n\nAll logic lives in `/usr/local/lib/coinor/coinor.py` on the server (tested: 55+ tests). Every episode must pass the rule checker in code before it is published to the feed. If the engine crashes, this workflow raises an alert.\n\n**Kill switch:** `python3 /usr/local/lib/coinor/coinor.py pause on`",
         "width": 440,
         "height": 240
       },
@@ -24,13 +24,13 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 0,6,12,18 * * *"
+              "expression": "0 6,18 * * *"
             }
           ]
         }
       },
       "id": "trig",
-      "name": "Four Times Daily",
+      "name": "Twice Daily",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
@@ -118,7 +118,7 @@
     }
   ],
   "connections": {
-    "Four Times Daily": {
+    "Twice Daily": {
       "main": [
         [
           {

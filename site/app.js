@@ -204,7 +204,7 @@
     if (!list.length) {
       nodes.push(el('div', { class: 'empty' }, [
         el('h2', { text: 'The first chronicle is being written', style: 'margin-top:0' }),
-        el('p', { text: 'New chapters appear here by themselves as the realm moves, up to four times a day. Check back soon.' }),
+        el('p', { text: 'New chapters appear here by themselves as the realm moves, up to twice a day. Check back soon.' }),
         el('p', {}, [el('a', { href: '#/realm', text: 'Meet the clans meanwhile' })])
       ]));
       return show(nodes, '', 'home');
@@ -294,7 +294,7 @@
     show([
       el('p', { class: 'eyebrow', text: 'About' }),
       el('h1', { text: 'How the Book is written' }),
-      el('p', { text: 'CoinorChronicles turns real market movement into an unfolding fantasy saga. When the markets move, a new chapter is drafted with the help of AI, using a fixed style guide and the live price data as story material. New chapters can appear up to four times a day.' }),
+      el('p', { text: 'CoinorChronicles turns real market movement into an unfolding fantasy saga. When the markets move, a new chapter is drafted with the help of AI, using a fixed style guide and the live price data as story material. New chapters can appear up to twice a day.' }),
       el('h2', { text: 'It runs by itself, with safety checks' }),
       el('p', { text: 'No person reads each chapter before it appears. Instead, every draft must pass a set of automatic checks in code: a fixed length and structure, in-world language only, no real-world names, no finance terms, no advice, no links or wallet addresses. If a draft fails, it is rewritten, and if it still fails, nothing is published. A person watches the system and can remove any chapter at any time.' }),
       el('h2', { text: 'What this is not' }),
