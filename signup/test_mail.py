@@ -3,11 +3,11 @@ from http.server import ThreadingHTTPServer
 import coinor_mail as M
 
 T0 = dt.datetime(2026, 10, 18, 8, 0, tzinfo=dt.timezone.utc)
-TOML = '[accounts.echo]\nemail = "echo@mgholdings.tech"\n[accounts.echo.message.send.backend]\nlogin = "echo@mgholdings.tech"\nauth.raw = "x"\n'
+TOML = '[accounts.coinor]\nemail = "coinor@mgholdings.tech"\n[accounts.coinor.message.send.backend]\nlogin = "coinor@mgholdings.tech"\nauth.raw = "x"\n'
 
 
 def setup_cfg(t):
-    p = os.path.join(t, "echo.toml"); open(p, "w").write(TOML)
+    p = os.path.join(t, "coinor.toml"); open(p, "w").write(TOML)
     M.CFG["mail_toml"] = p
     M.CFG["state"] = os.path.join(t, "digest_state.json")
 
@@ -95,7 +95,7 @@ class Confirmations(unittest.TestCase):
         raw = m.as_bytes().decode("ascii", "replace")
         line = [l for l in raw.splitlines() if l.startswith("List-Unsubscribe:")][0]
         self.assertTrue(line.startswith("List-Unsubscribe: <https://") and "=?utf-8" not in line, line)
-        self.assertEqual(m["To"], "a@example.com"); self.assertIn("echo@mgholdings.tech", m["From"])
+        self.assertEqual(m["To"], "a@example.com"); self.assertIn("coinor@mgholdings.tech", m["From"])
 
     def test_sent_once_and_marked(self):
         got = []

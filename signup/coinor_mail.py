@@ -25,7 +25,7 @@ CFG = {
     "site": "https://coinorchonicles.space",
     "api_base": "https://coinor.2-24-128-252.sslip.io/api",
     "feed": "/var/www/coinor/feed/episodes.json",
-    "mail_toml": "/home/hermes/.mail-vault/echo.toml", "account": "echo",
+    "mail_toml": "/home/hermes/.mail-vault/coinor.toml", "account": "coinor",
     "smtp_host": "127.0.0.1", "smtp_port": 2525,
     "from_name": "CoinorChronicles",
     "trigger": "/var/lib/coinor/allowlist.trigger",
