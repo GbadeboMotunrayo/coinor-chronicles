@@ -1,0 +1,2014 @@
+{
+  "name": "CoinorChronicles \u2014 Episode Pipeline",
+  "nodes": [
+    {
+      "id": "c28b5bde-e60c-45de-828a-00d147944356",
+      "name": "Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -200,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0,6,12,18 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e8f130aa-9361-4559-9fac-af185dae4e5b",
+      "name": "Fetch CoinGecko Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        60,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.coingecko.com/api/v3/simple/price",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ids",
+              "value": "bitcoin,ethereum,litecoin,binancecoin,ripple,solana,the-open-network,avalanche-2,stellar,tron,cardano,chainlink,uniswap,aave,injective-protocol,jasmycoin,pepe,shiba-inu,dogecoin,floki,notcoin,book-of-meme,bonk"
+            },
+            {
+              "name": "vs_currencies",
+              "value": "usd"
+            },
+            {
+              "name": "include_24hr_change",
+              "value": "true"
+            },
+            {
+              "name": "include_24hr_vol",
+              "value": "true"
+            },
+            {
+              "name": "include_market_cap",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "493d471d-16f0-46b4-84c1-5cef5b74384b",
+      "name": "Normalize Prices & Market Condition",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const tickerMap = {\n  bitcoin:'BTC', ethereum:'ETH', litecoin:'LTC', binancecoin:'BNB', ripple:'XRP',\n  solana:'SOL', 'the-open-network':'TON', 'avalanche-2':'AVAX', stellar:'XLM',\n  tron:'TRX', cardano:'ADA', chainlink:'LINK', uniswap:'UNI', aave:'AAVE',\n  'injective-protocol':'INJ', jasmycoin:'JASMY', pepe:'PEPE', 'shiba-inu':'SHIB',\n  dogecoin:'DOGE', floki:'FLOKI', notcoin:'NOT', 'book-of-meme':'BOME', bonk:'BONK'\n};\n\nconst raw = $input.first().json;\nconst prices = {};\nfor (const [cgId, data] of Object.entries(raw)) {\n  const ticker = tickerMap[cgId];\n  if (!ticker) continue;\n  const change = Number(data.usd_24h_change ?? 0);\n  prices[ticker] = {\n    price: data.usd,\n    change_24h: Math.round(change * 100) / 100,\n    volume: data.usd_24h_vol ?? 0,\n    market_cap: data.usd_market_cap ?? 0,\n    gold_units: Math.round(Math.abs(change) * 10) / 10,\n    direction: change >= 0 ? 'heavier' : 'lighter'\n  };\n}\n\nconst btc = prices.BTC?.change_24h ?? 0;\nconst eth = prices.ETH?.change_24h ?? 0;\nconst avg = (btc + eth) / 2;\nlet market_condition = 'waiting_plains';\nif (avg > 0.5) market_condition = 'golden_season';\nelse if (avg < -0.5) market_condition = 'dark_siege';\n\nreturn [{ json: { prices, market_condition, fetched_at: new Date().toISOString() } }];"
+      }
+    },
+    {
+      "id": "96514827-0c54-4d4d-b533-cdcbd239fa23",
+      "name": "Is Waiting Plains?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        580,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.market_condition }}",
+              "rightValue": "waiting_plains",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "5a2e1b98-e36d-4972-94df-233d33719b0b",
+      "name": "Skip - Flat Market",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        840,
+        -120
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "8b7f9dae-fd3e-49e2-95f7-c4fce39e49a3",
+      "name": "Get Recent Clan Rotation",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        840,
+        120
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT clan FROM clan_rotation ORDER BY ran_at DESC LIMIT 4"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "3",
+          "name": "Hostinger MySQL - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "53e107a7-97b1-46fa-bbc1-94a7c34ec43d",
+      "name": "Select Clan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        120
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const CLANS = {\n  ancients: { name:'Clan of the Ancients', territory:'The Obsidian Citadel', coins:['BTC','ETH','LTC','BNB','XRP'], characters:['Aragorn','Gandalf','Samwise','Elrond','Boromir'] },\n  swift: { name:'Clan of the Swift', territory:'The Electric Plains', coins:['SOL','TON','AVAX','XLM','TRX'], characters:['Legolas','Eomer','Eowyn','Faramir','Saruman'] },\n  meme_lords: { name:'Clan of Meme Lords', territory:'Kekiston Bazaar', coins:['PEPE','SHIB','DOGE','FLOKI','NOT','BOME','BONK'], characters:['Tom Bombadil','Merry','Pippin','Theoden','Frodo','Bilbo','Gollum'] },\n  builders: { name:'Clan of the Builders', territory:'The Forge of Chains', coins:['LINK','UNI','AAVE','INJ','ADA','JASMY'], characters:['Gimli','Galadriel','Treebeard'] }\n};\n\nconst { prices, market_condition } = $('Normalize Prices & Market Condition').first().json;\nconst recentClans = $input.all().map(i => i.json.clan);\nconst allClans = Object.keys(CLANS);\n\nlet dominant = null;\nouter:\nfor (const [clanKey, clan] of Object.entries(CLANS)) {\n  for (const coin of clan.coins) {\n    if (prices[coin] && Math.abs(prices[coin].change_24h) > 12) {\n      dominant = clanKey;\n      break outer;\n    }\n  }\n}\n\nlet selected = dominant;\nif (!selected) selected = allClans.find(c => !recentClans.includes(c));\nif (!selected) selected = recentClans.length ? recentClans[recentClans.length - 1] : allClans[Math.floor(Math.random()*allClans.length)];\n\nreturn [{ json: { selected_clan: selected, clan: CLANS[selected], prices, market_condition } }];"
+      }
+    },
+    {
+      "id": "df0bfcd2-67e2-4c1b-962e-1da7101b1378",
+      "name": "Get All Character Status",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        1360,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM character_status"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "3",
+          "name": "Hostinger MySQL - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "52d9f8ac-fdf7-4693-be8d-e2a3aaa55b26",
+      "name": "Get Story Settings",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        1360,
+        140
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT setting_value FROM site_settings WHERE setting_key = 'total_story_count'"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "3",
+          "name": "Hostinger MySQL - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "eeb4d76d-fd7f-4cbf-8519-2cf3c0ee5cf1",
+      "name": "Get Story Memory",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1360,
+        280
+      ],
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appnSqAoHqVbGXDtg"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblMEtwBNBI9BScWN"
+        },
+        "filterByFormula": "={{ \"{Clan} = '\" + $('Select Clan').item.json.selected_clan + \"'\" }}",
+        "options": {}
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "4",
+          "name": "Airtable - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "5b17b089-f24f-43d4-b77d-7c2340897829",
+      "name": "Get Creator Override",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1360,
+        420
+      ],
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appnSqAoHqVbGXDtg"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblVx9yl52YOuSjYZ"
+        },
+        "filterByFormula": "={{ \"AND({is_active} = 1, OR({target_clan} = '\" + $('Select Clan').item.json.selected_clan + \"', {target_clan} = ''))\" }}",
+        "options": {}
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "4",
+          "name": "Airtable - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "ac6a0bd2-dcf0-413c-b8c6-89c254de491f",
+      "name": "Build Heaven Positions & Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { clan } = $('Select Clan').item.json;\nconst allStatus = $('Get All Character Status').all().map(i => i.json);\n\nconst heavenLines = [];\nconst heavens = {};\nfor (const coin of clan.coins) {\n  const row = allStatus.find(r => r.coin_ticker === coin);\n  if (!row) continue;\n  heavens[coin] = { character: row.character_name, gate: row.gate_number, heaven: row.heaven_number, last_price: row.current_price };\n  heavenLines.push(`  - ${row.character_name}: ${coin} | Heaven ${row.heaven_number} of Gate ${row.gate_number} | Last price: $${row.current_price}`);\n}\n\nreturn [{ json: { heavens, heaven_lines: heavenLines.join('\\n') } }];"
+      }
+    },
+    {
+      "id": "e8daae52-519e-4c23-b9e5-4b6436052f35",
+      "name": "Fetch Style Guide & Prompts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        180
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const base = 'https://raw.githubusercontent.com/GbadeboMotunrayo/coinor-chronicles/main';\nconst docs = {\n  world_bible: `${base}/docs/WORLD_BIBLE.md`,\n  character_voices: `${base}/docs/CHARACTER_VOICES.md`,\n  external_realms: `${base}/docs/EXTERNAL_REALMS.md`,\n  cosmology: `${base}/docs/COSMOLOGY.md`,\n  script_generator: `${base}/prompts/script_generator.md`,\n  review_agent: `${base}/prompts/review_agent.md`,\n  celebration_episode: `${base}/prompts/celebration_episode.md`\n};\n\nconst fetched = {};\nfor (const [key, url] of Object.entries(docs)) {\n  try { fetched[key] = await this.helpers.httpRequest({ method: 'GET', url }); }\n  catch (e) { fetched[key] = ''; }\n}\n\nconst style_guide = [fetched.world_bible, fetched.character_voices, fetched.external_realms, fetched.cosmology]\n  .filter(Boolean).join('\\n\\n---\\n\\n');\n\nreturn [{ json: { style_guide, ...fetched } }];"
+      }
+    },
+    {
+      "id": "3d849b3d-8a0e-4631-83bc-025e1b1c41fc",
+      "name": "Build Story Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { clan, prices, market_condition, selected_clan } = $('Select Clan').item.json;\nconst { heaven_lines } = $('Build Heaven Positions & Context').item.json;\nconst memoryRows = $('Get Story Memory').all();\nconst memory = memoryRows.length ? memoryRows[0].json : {};\nconst overrideRows = $('Get Creator Override').all();\nconst override = overrideRows.length ? overrideRows[0].json : null;\n\nconst settingsRows = $('Get Story Settings').all();\nconst story_count = (settingsRows.length ? Number(settingsRows[0].json.setting_value) : 0) + 1;\n\nconst coinLines = clan.coins\n  .filter(c => prices[c])\n  .map(c => `  - ${c}: $${prices[c].price} | ${prices[c].change_24h}% | ${prices[c].gold_units} gold units ${prices[c].direction}`)\n  .join('\\n');\n\nconst conditionName = { golden_season: 'The Golden Season', dark_siege: 'The Dark Siege', waiting_plains: 'The Waiting Plains' }[market_condition];\n\nconst prompt = `SELECTED_CLAN: ${clan.name} \u2014 ${clan.territory}\nMARKET_CONDITION: ${conditionName}\nMARKET_DATA:\n${coinLines}\nLAST_EPISODE_SUMMARY: ${memory.last_summary || 'The chronicle begins.'}\nSTORY_DIRECTION: ${memory.story_direction || ''}\nCURRENT_HEAVENS:\n${heaven_lines}\nCREATOR_OVERRIDE: ${override ? override.override_text : 'None \u2014 generate naturally from market data'}\nSTORY_COUNT: ${story_count}\n\nNow write the episode following all rules in the style guide.`;\n\nreturn [{ json: { prompt, story_count, has_override: !!override, override_id: override ? override.id : null, selected_clan } }];"
+      }
+    },
+    {
+      "id": "c1e8c0b0-1100-47ec-8537-64fb3ee34db8",
+      "name": "Anthropic - Generate Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2140,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"claude-sonnet-4-20250514\", max_tokens: 1500, system: \"You are the official story narrator of CoinorChronicles. \" + $('Fetch Style Guide & Prompts').item.json.script_generator + \"\\n\\n\" + $('Fetch Style Guide & Prompts').item.json.style_guide, messages: [ { role: \"user\", content: $('Build Story Prompt').item.json.prompt } ] }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Anthropic API Key (x-api-key)"
+        }
+      }
+    },
+    {
+      "id": "70e0ca7b-082c-4b21-926a-0aaecf139d9c",
+      "name": "Anthropic - Review Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"claude-sonnet-4-20250514\", max_tokens: 1000, system: $('Fetch Style Guide & Prompts').item.json.review_agent, messages: [ { role: \"user\", content: \"Review this story script:\\n\\n---\\n\" + $json.content[0].text + \"\\n---\" } ] }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Anthropic API Key (x-api-key)"
+        }
+      }
+    },
+    {
+      "id": "acae23a6-915c-4ff1-8bb0-321ef8356ef7",
+      "name": "Parse Review Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2660,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const reviewText = $json.content[0].text;\nconst passed = reviewText.toUpperCase().includes('REVIEW RESULT: PASS');\nconst storyText = $('Anthropic - Generate Story').item.json.content[0].text;\nreturn [{ json: { passed, review_notes: reviewText, story_raw: storyText } }];"
+      }
+    },
+    {
+      "id": "3d074fe4-0c9c-40f2-acbe-79d032d62f1b",
+      "name": "Review Passed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2920,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.passed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "76d70d2c-cc4e-4736-9653-c42e63c91bff",
+      "name": "Build Regeneration Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3180,
+        160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const basePrompt = $('Build Story Prompt').item.json.prompt;\nconst notes = $('Parse Review Result').item.json.review_notes;\nconst feedback_prompt = `${basePrompt}\\n\\n## PREVIOUS ATTEMPT FAILED REVIEW:\\n${notes}\\n\\nFix these issues in your next attempt.`;\nreturn [{ json: { feedback_prompt } }];"
+      }
+    },
+    {
+      "id": "8228216a-b8d9-47af-bb44-6817bd66b2e0",
+      "name": "Anthropic - Regenerate Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3440,
+        160
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"claude-sonnet-4-20250514\", max_tokens: 1500, system: \"You are the official story narrator of CoinorChronicles. \" + $('Fetch Style Guide & Prompts').item.json.script_generator + \"\\n\\n\" + $('Fetch Style Guide & Prompts').item.json.style_guide, messages: [ { role: \"user\", content: $('Build Regeneration Prompt').item.json.feedback_prompt } ] }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Anthropic API Key (x-api-key)"
+        }
+      }
+    },
+    {
+      "id": "d2266dae-69c0-4722-942a-6ba596c4d552",
+      "name": "Anthropic - Review Story (2nd Pass)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3700,
+        160
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"claude-sonnet-4-20250514\", max_tokens: 1000, system: $('Fetch Style Guide & Prompts').item.json.review_agent, messages: [ { role: \"user\", content: \"Review this story script:\\n\\n---\\n\" + $json.content[0].text + \"\\n---\" } ] }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Anthropic API Key (x-api-key)"
+        }
+      }
+    },
+    {
+      "id": "a4d516dd-fc79-43a2-9a46-e2c393b0a463",
+      "name": "Parse Review Result (2nd Pass)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3960,
+        160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const reviewText = $json.content[0].text;\nconst passed = reviewText.toUpperCase().includes('REVIEW RESULT: PASS');\nconst storyText = $('Anthropic - Regenerate Story').item.json.content[0].text;\nreturn [{ json: { passed, review_notes: reviewText, story_raw: storyText } }];"
+      }
+    },
+    {
+      "id": "dbc6564d-3903-497c-b8c6-cacb23013f82",
+      "name": "Review Passed 2nd Time?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4220,
+        160
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.passed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d73dc820-9af3-4bd0-a208-39dc07c6846a",
+      "name": "Build Failure Log Entry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4480,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function esc(s) { return String(s ?? '').replace(/\\\\/g, '\\\\\\\\').replace(/'/g, \"\\\\'\"); }\nreturn [{ json: {\n  selected_clan: $('Select Clan').item.json.selected_clan,\n  error_msg: esc('Story failed review twice: ' + $('Parse Review Result (2nd Pass)').item.json.review_notes)\n} }];"
+      }
+    },
+    {
+      "id": "3359f469-4e31-4a9b-b493-ce2a336c0aaa",
+      "name": "Log Pipeline Failure",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        4740,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO pipeline_logs (clan, status, story_id, error_msg, duration_ms) VALUES ('\" + $json.selected_clan + \"', 'failed', NULL, '\" + $json.error_msg + \"', 0)\" }}"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "3",
+          "name": "Hostinger MySQL - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "860e20b1-a128-4007-8991-b029ce0cc233",
+      "name": "Parse Story",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2920,
+        -200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const raw = $json.story_raw;\nconst lines = raw.trim().split('\\n');\nlet title = lines[0].replace(/\\*\\*/g, '').replace(/\\*/g, '').replace(/#/g, '').trim();\nif (title.length > 255) title = title.slice(0, 252) + '...';\n\nlet story_text = raw;\nlet scene_notes = '';\nif (raw.includes('[SCENE NOTES]')) {\n  story_text = raw.slice(0, raw.indexOf('[SCENE NOTES]')).trim();\n  scene_notes = raw.slice(raw.indexOf('[SCENE NOTES]'));\n}\n\nreturn [{ json: { title, story_text, scene_notes, is_celebration: false, is_donation: false } }];"
+      }
+    },
+    {
+      "id": "6bd4296a-cc03-4372-8961-3626c70fafff",
+      "name": "Is Donation Episode?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3180,
+        -200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Build Story Prompt').item.json.story_count % 20 }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2094f0a7-a4e6-43f6-8983-f0205d5cb760",
+      "name": "Inject Wallet Addresses",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3440,
+        -320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// NOTE: set your real donation wallet addresses below before going live.\nconst wallets = `\n**The Fellowship Contribution Scrolls:**\n- BTC: \\`YOUR_BTC_WALLET_ADDRESS\\`\n- ETH: \\`YOUR_ETH_WALLET_ADDRESS\\`\n- USDT: \\`YOUR_USDT_WALLET_ADDRESS\\`\n- PEPE: \\`YOUR_PEPE_WALLET_ADDRESS\\`\n- SHIB: \\`YOUR_SHIB_WALLET_ADDRESS\\`\n`;\nconst item = { ...$json };\nitem.story_text = item.story_text.replace('[WALLET_PLACEHOLDER]', wallets);\nitem.is_donation = true;\nreturn [{ json: item }];"
+      }
+    },
+    {
+      "id": "c5c5fa0d-2d56-4436-a424-e386587b21cb",
+      "name": "Get Existing Milestones",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        3700,
+        -80
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT coin_ticker, milestone_type, milestone_value FROM milestones"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "3",
+          "name": "Hostinger MySQL - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "f6b52c74-2b0a-4886-8a29-7c7bf58dc854",
+      "name": "Check Milestones",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3960,
+        -80
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const GATES = {\n  BTC:{gate1:100000,gate2:1000000,gate3:10000000}, ETH:{gate1:10000,gate2:100000,gate3:1000000},\n  SOL:{gate1:1000,gate2:10000,gate3:100000}, XRP:{gate1:100,gate2:1000,gate3:10000},\n  BNB:{gate1:10000,gate2:100000,gate3:1000000}, LTC:{gate1:1000,gate2:10000,gate3:100000},\n  TON:{gate1:10,gate2:100,gate3:1000}, AVAX:{gate1:500,gate2:5000,gate3:50000},\n  XLM:{gate1:5,gate2:50,gate3:500}, TRX:{gate1:1,gate2:10,gate3:100},\n  ADA:{gate1:10,gate2:100,gate3:1000}, JASMY:{gate1:1,gate2:10,gate3:100},\n  LINK:{gate1:1000,gate2:10000,gate3:100000}, UNI:{gate1:100,gate2:1000,gate3:10000},\n  AAVE:{gate1:10000,gate2:100000,gate3:1000000}, INJ:{gate1:1000,gate2:10000,gate3:100000},\n  PEPE:{gate1:1,gate2:10,gate3:100}, SHIB:{gate1:0.001,gate2:0.01,gate3:0.1},\n  DOGE:{gate1:10,gate2:100,gate3:1000}, FLOKI:{gate1:1,gate2:10,gate3:100},\n  NOT:{gate1:0.1,gate2:1,gate3:10}, BOME:{gate1:0.1,gate2:1,gate3:10}, BONK:{gate1:1,gate2:10,gate3:100}\n};\n\nconst { clan, prices } = $('Select Clan').item.json;\nconst allStatus = $('Get All Character Status').all().map(i => i.json);\nconst existing = $input.all().map(i => i.json);\n\nconst already = (coin, type, value) => existing.some(m => m.coin_ticker === coin && m.milestone_type === type && Number(m.milestone_value) === Number(value));\n\nconst crossed = [];\nfor (const coin of clan.coins) {\n  const gates = GATES[coin];\n  const status = allStatus.find(r => r.coin_ticker === coin);\n  if (!gates || !status || !prices[coin]) continue;\n\n  const currentPrice = prices[coin].price;\n  const gateKey = 'gate' + status.gate_number;\n  const gatePrice = gates[gateKey];\n  if (!gatePrice) continue;\n\n  if (currentPrice >= gatePrice && !already(coin, 'gate', status.gate_number)) {\n    crossed.push({ coin, type: 'gate', value: status.gate_number, price: currentPrice, character: status.character_name });\n  }\n\n  const prevGateKey = 'gate' + (status.gate_number - 1);\n  const prevGatePrice = status.gate_number > 1 ? (gates[prevGateKey] || 0) : 0;\n  const gap = gatePrice - prevGatePrice;\n  const heavenThreshold = prevGatePrice + (gap / 10) * status.heaven_number;\n\n  if (currentPrice >= heavenThreshold && !already(coin, 'heaven', status.heaven_number)) {\n    crossed.push({ coin, type: 'heaven', value: status.heaven_number, price: currentPrice, character: status.character_name });\n  }\n}\n\nreturn [{ json: { is_celebration: crossed.length > 0, milestones_crossed: crossed, milestone: crossed[0] || null } }];"
+      }
+    },
+    {
+      "id": "ba7802df-6903-444e-8592-b2c12ea3419b",
+      "name": "Is Celebration?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4220,
+        -80
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.is_celebration }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "90e7c113-d032-4ad8-afdd-8cb7dd5cb68a",
+      "name": "Insert Milestone Record",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        4480,
+        -220
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO milestones (coin_ticker, character_name, milestone_type, milestone_value, price_at_crossing) VALUES ('\" + $json.milestone.coin + \"', '\" + $json.milestone.character + \"', '\" + $json.milestone.type + \"', \" + $json.milestone.value + \", \" + $json.milestone.price + \")\" }}"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "3",
+          "name": "Hostinger MySQL - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "f3120f6f-578c-4f0d-9fe7-8f1019a9d690",
+      "name": "Build Celebration Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4740,
+        -220
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const m = $('Check Milestones').item.json.milestone;\nconst prompt = `MILESTONE_TYPE: ${m.type.toUpperCase()}_CROSSING\nCHARACTER: ${m.character}\nCOIN: ${m.coin}\nMILESTONE: ${m.type.charAt(0).toUpperCase() + m.type.slice(1)} ${m.value}\nPRICE_AT_MILESTONE: $${m.price}\nDATE: ${new Date().toISOString().slice(0,10)}\n\nWrite a full celebration episode for this milestone, following the celebration_episode.md structure exactly.`;\nreturn [{ json: { celebration_prompt: prompt } }];"
+      }
+    },
+    {
+      "id": "18f6dc3b-4510-4c63-bd66-f027ba74e6e7",
+      "name": "Anthropic - Generate Celebration Episode",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5000,
+        -220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"claude-sonnet-4-20250514\", max_tokens: 1800, system: \"You are the celebration episode writer for CoinorChronicles. \" + $('Fetch Style Guide & Prompts').item.json.celebration_episode + \"\\n\\n\" + $('Fetch Style Guide & Prompts').item.json.style_guide, messages: [ { role: \"user\", content: $json.celebration_prompt } ] }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Anthropic API Key (x-api-key)"
+        }
+      }
+    },
+    {
+      "id": "05f60fb9-08ee-4ec1-b2de-b8f7109dce5b",
+      "name": "Parse Celebration Story",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5260,
+        -220
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const raw = $json.content[0].text;\nconst lines = raw.trim().split('\\n');\nlet title = lines[0].replace(/\\*\\*/g, '').replace(/\\*/g, '').replace(/#/g, '').trim();\nif (title.length > 255) title = title.slice(0, 252) + '...';\n\nlet story_text = raw;\nlet scene_notes = '';\nif (raw.includes('[SCENE NOTES]')) {\n  story_text = raw.slice(0, raw.indexOf('[SCENE NOTES]')).trim();\n  scene_notes = raw.slice(raw.indexOf('[SCENE NOTES]'));\n}\n\nreturn [{ json: { title, story_text, scene_notes, is_celebration: true, is_donation: false } }];"
+      }
+    },
+    {
+      "id": "2f3bbc1f-fba2-43e0-a9e8-27bd34ca8783",
+      "name": "Finalize Story",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5000,
+        -80
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function tryGet(name) {\n  try { const items = $(name).all(); return items.length ? items[items.length - 1].json : null; }\n  catch (e) { return null; }\n}\n\nconst story = tryGet('Parse Celebration Story') || tryGet('Inject Wallet Addresses') || tryGet('Parse Story');\nconst { selected_clan, clan, market_condition } = $('Select Clan').item.json;\nconst { story_count, has_override, override_id } = $('Build Story Prompt').item.json;\n\nfunction esc(s) { return String(s ?? '').replace(/\\\\/g, '\\\\\\\\').replace(/'/g, \"''\"); }\n\nreturn [{ json: {\n  episode_number: story_count,\n  selected_clan, clan_name: clan.name, territory: clan.territory,\n  market_condition, has_override, override_id,\n  title: story.title, story_text: story.story_text, scene_notes: story.scene_notes || '',\n  is_celebration: !!story.is_celebration, is_donation: !!story.is_donation,\n  title_sql: esc(story.title), story_text_sql: esc(story.story_text)\n} }];"
+      }
+    },
+    {
+      "id": "7a6c33af-d8b1-4bea-ab7a-c4ad7b5cbf56",
+      "name": "Insert Story",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        5260,
+        -80
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO stories (episode_number, clan, clan_name, territory, title, story_text, market_condition, is_celebration, is_donation, is_creator_override, published_at) VALUES (\" + $json.episode_number + \", '\" + $json.selected_clan + \"', '\" + $json.clan_name + \"', '\" + $json.territory + \"', '\" + $json.title_sql + \"', '\" + $json.story_text_sql + \"', '\" + $json.market_condition + \"', \" + (+$json.is_celebration) + \", \" + (+$json.is_donation) + \", \" + (+$json.has_override) + \", NOW())\" }}",
+        "options": {
+          "queryBatching": "independently"
+        }
+      },
+      "credentials": {
+        "mySql": {
+          "id": "3",
+          "name": "Hostinger MySQL - CoinorChronicles"
+        }
+      },
+      "notes": "After first run, check this node's output for the insert id field name (insertId / insert_id) and adjust 'Build State Update Queries' + the publish-status update nodes if it differs in your n8n/mysql2 version."
+    },
+    {
+      "id": "4ca49bee-fe61-456d-a0cb-7c43b7b2b88a",
+      "name": "Anthropic - Summarize Episode",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5520,
+        -80
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"claude-sonnet-4-20250514\", max_tokens: 300, messages: [ { role: \"user\", content: \"Summarise this story in 2 sentences as a memory for the next episode. Focus on what happened to the characters and the road ahead:\\n\\n\" + $('Finalize Story').item.json.story_text } ] }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Anthropic API Key (x-api-key)"
+        }
+      }
+    },
+    {
+      "id": "8a665866-3899-49f0-a705-c91fafe2ad1b",
+      "name": "Update Story Memory",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        5780,
+        -80
+      ],
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appnSqAoHqVbGXDtg"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblMEtwBNBI9BScWN"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Clan"
+          ],
+          "value": {
+            "Clan": "={{ $('Select Clan').item.json.selected_clan }}",
+            "last_summary": "={{ $json.content[0].text }}"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "4",
+          "name": "Airtable - CoinorChronicles"
+        }
+      },
+      "notes": "Airtable 'update' matches by the Clan field \u2014 make sure Story Memory has one row per clan (ancients/swift/meme_lords/builders), seeded as in database_setup.sql's story_memory INSERTs."
+    },
+    {
+      "id": "0870497b-ae74-4ac4-867f-07201ec72118",
+      "name": "Build State Update Queries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5780,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const GATES = {\n  BTC:{gate1:100000,gate2:1000000,gate3:10000000}, ETH:{gate1:10000,gate2:100000,gate3:1000000},\n  SOL:{gate1:1000,gate2:10000,gate3:100000}, XRP:{gate1:100,gate2:1000,gate3:10000},\n  BNB:{gate1:10000,gate2:100000,gate3:1000000}, LTC:{gate1:1000,gate2:10000,gate3:100000},\n  TON:{gate1:10,gate2:100,gate3:1000}, AVAX:{gate1:500,gate2:5000,gate3:50000},\n  XLM:{gate1:5,gate2:50,gate3:500}, TRX:{gate1:1,gate2:10,gate3:100},\n  ADA:{gate1:10,gate2:100,gate3:1000}, JASMY:{gate1:1,gate2:10,gate3:100},\n  LINK:{gate1:1000,gate2:10000,gate3:100000}, UNI:{gate1:100,gate2:1000,gate3:10000},\n  AAVE:{gate1:10000,gate2:100000,gate3:1000000}, INJ:{gate1:1000,gate2:10000,gate3:100000},\n  PEPE:{gate1:1,gate2:10,gate3:100}, SHIB:{gate1:0.001,gate2:0.01,gate3:0.1},\n  DOGE:{gate1:10,gate2:100,gate3:1000}, FLOKI:{gate1:1,gate2:10,gate3:100},\n  NOT:{gate1:0.1,gate2:1,gate3:10}, BOME:{gate1:0.1,gate2:1,gate3:10}, BONK:{gate1:1,gate2:10,gate3:100}\n};\n\nconst { prices, selected_clan } = $('Select Clan').item.json;\nconst allStatus = $('Get All Character Status').all().map(i => i.json);\nconst story_count = $('Build Story Prompt').item.json.story_count;\nconst story_id = $('Insert Story').item.json.insertId ?? $('Insert Story').item.json.insert_id ?? null;\n\nfunction esc(s) { return String(s).replace(/'/g, \"''\"); }\n\nconst stmts = [];\nfor (const [ticker, data] of Object.entries(prices)) {\n  stmts.push(`UPDATE character_status SET current_price = ${data.price}, last_updated = NOW() WHERE coin_ticker = '${esc(ticker)}'`);\n}\n\nfor (const row of allStatus) {\n  const ticker = row.coin_ticker;\n  const gates = GATES[ticker];\n  if (!gates || !prices[ticker]) continue;\n  const gateKey = 'gate' + row.gate_number;\n  const prevGateKey = 'gate' + (row.gate_number - 1);\n  const gatePrice = gates[gateKey];\n  const prevGatePrice = row.gate_number > 1 ? (gates[prevGateKey] || 0) : 0;\n  if (!gatePrice) continue;\n  const gap = gatePrice - prevGatePrice;\n  const position = prices[ticker].price - prevGatePrice;\n  let heaven = Math.ceil((position / gap) * 10);\n  heaven = Math.max(1, Math.min(10, heaven));\n  stmts.push(`UPDATE character_status SET heaven_number = ${heaven} WHERE coin_ticker = '${esc(ticker)}'`);\n}\n\nconst nowSql = new Date().toISOString().slice(0,19).replace('T',' ');\nstmts.push(`INSERT INTO site_settings (setting_key, setting_value) VALUES ('total_story_count', '${story_count}') ON DUPLICATE KEY UPDATE setting_value = '${story_count}'`);\nstmts.push(`INSERT INTO site_settings (setting_key, setting_value) VALUES ('last_run', '${nowSql}') ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`);\nstmts.push(`INSERT INTO clan_rotation (clan, story_id) VALUES ('${esc(selected_clan)}', ${story_id ?? 'NULL'})`);\n\nreturn [{ json: { sql: stmts.join(';\\n') + ';', story_id } }];"
+      }
+    },
+    {
+      "id": "aeb56661-979c-4ca9-9351-81215548ff7f",
+      "name": "Execute State Updates",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        6040,
+        140
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.sql }}"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "3",
+          "name": "Hostinger MySQL - CoinorChronicles"
+        }
+      },
+      "notes": "Runs several ';'-separated statements in one call. If your MySQL connection doesn't have multipleStatements enabled, split this into one Execute Query node per statement instead."
+    },
+    {
+      "id": "907bb94a-8c49-464b-b902-37b3b247a70f",
+      "name": "Had Creator Override?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        6300,
+        140
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Build Story Prompt').item.json.has_override }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e27793d9-bead-4c1b-8f20-501e500e903c",
+      "name": "Mark Override Used",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        6560,
+        40
+      ],
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "id",
+          "value": "appnSqAoHqVbGXDtg"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblVx9yl52YOuSjYZ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $('Build Story Prompt').item.json.override_id }}",
+            "is_active": false
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "4",
+          "name": "Airtable - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "c197f806-fd65-4015-93c6-a5779ced1485",
+      "name": "Prepare Narration Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6820,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const clean = $('Finalize Story').item.json.story_text\n  .replace(/\\*\\*/g, '')\n  .replace(/\\*/g, '')\n  .replace(/\\[.*?\\]/g, '')\n  .trim();\nreturn [{ json: { narration_text: clean } }];"
+      }
+    },
+    {
+      "id": "01c40ed9-5a4a-4f95-b6d9-46c53430da6b",
+      "name": "Generate Aragorn Narration",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        7080,
+        140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/YOUR_ARAGORN_VOICE_ID",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.narration_text, model_id: \"eleven_multilingual_v2\", voice_settings: { stability: 0.55, similarity_boost: 0.8 } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "2",
+          "name": "ElevenLabs API Key (xi-api-key)"
+        }
+      },
+      "notes": "Set your real ARAGORN_VOICE_ID in the URL after creating/cloning the voice in ElevenLabs."
+    },
+    {
+      "id": "924dc504-ab1e-4599-b341-e829f6d5bae5",
+      "name": "Save Narration Audio",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        7340,
+        140
+      ],
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ '/data/coinor/audio/episode_' + $('Finalize Story').item.json.episode_number + '.mp3' }}",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "notes": "Adjust the folder to a real path mounted into your n8n container/VPS. This must be the same volume ffmpeg (Execute Command) can read from."
+    },
+    {
+      "id": "8dff2c7a-9e02-4137-a2a8-54b19b5f6b8f",
+      "name": "Select Background & Build Overlay Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7600,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { selected_clan, market_condition } = $('Finalize Story').item.json;\nconst { prices, clan } = $('Select Clan').item.json;\n\n// Reusable clan background library convention \u2014 one image per clan x market condition.\n// Pre-generate/place these once at /data/coinor/backgrounds/<clan>_<condition>.jpg\nconst background_path = `/data/coinor/backgrounds/${selected_clan}_${market_condition}.jpg`;\n\nconst overlayLines = clan.coins\n  .filter(c => prices[c])\n  .map(c => `${c} $${prices[c].price} (${prices[c].change_24h >= 0 ? '+' : ''}${prices[c].change_24h}%)`)\n  .join('   |   ');\n\nfunction escDraw(s) { return String(s).replace(/:/g, '\\\\:').replace(/'/g, \"\\\\\\\\'\"); }\n\nreturn [{ json: {\n  background_path,\n  overlay_text: overlayLines,\n  overlay_text_escaped: escDraw(overlayLines),\n  audio_path: `/data/coinor/audio/episode_${$('Finalize Story').item.json.episode_number}.mp3`,\n  output_path: `/data/coinor/output/episode_${$('Finalize Story').item.json.episode_number}.mp4`\n} }];"
+      }
+    },
+    {
+      "id": "81214aed-0d4e-4344-ad56-d036ac2579e0",
+      "name": "Render Episode Video (ffmpeg)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        7860,
+        140
+      ],
+      "parameters": {
+        "command": "={{ `ffmpeg -y -loop 1 -i \"${$json.background_path}\" -i \"${$json.audio_path}\" -vf \"drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='${$json.overlay_text_escaped}':fontcolor=white:fontsize=26:x=40:y=h-140:box=1:boxcolor=black@0.55:boxborderw=12\" -c:v libx264 -tune stillimage -c:a aac -b:a 192k -pix_fmt yuv420p -shortest \"${$json.output_path}\"` }}"
+      },
+      "notes": "Requires an ffmpeg binary available inside the n8n container/host \u2014 the default n8n Docker image does NOT include it. Either build a custom n8n image with ffmpeg installed, or replace this node with a call to a rendering API (Shotstack, Creatomate) if you'd rather not manage ffmpeg yourself."
+    },
+    {
+      "id": "46405056-13b1-49ea-ab3f-974b8bc2f244",
+      "name": "Read Rendered Video",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        8120,
+        140
+      ],
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "={{ $('Select Background & Build Overlay Text').item.json.output_path }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "40eea1ee-5915-43ee-92b5-eff8b1faedc3",
+      "name": "Upload to YouTube",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        8380,
+        40
+      ],
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Finalize Story').item.json.title }}",
+        "regionCode": "US",
+        "categoryId": "24",
+        "options": {
+          "description": "={{ $('Finalize Story').item.json.title + '\\n\\nEpisode ' + $('Finalize Story').item.json.episode_number + ' of CoinorChronicles \u2014 the living chronicle of the Realm of Coinor. coinorchronicles.com' }}",
+          "privacyStatus": "public",
+          "tags": "=CoinorChronicles,crypto,Bitcoin,fantasy,lore"
+        },
+        "binaryPropertyName": "data"
+      },
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "5",
+          "name": "YouTube - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "9cf9c9ed-b403-4228-b4f6-a0755cea9a3f",
+      "name": "Upload to TikTok",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        8380,
+        240
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://open.tiktokapis.com/v2/post/publish/video/init/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ post_info: { title: $('Finalize Story').item.json.title, privacy_level: \"PUBLIC_TO_EVERYONE\" }, source_info: { source: \"FILE_UPLOAD\", video_size: $binary.data.fileSize } }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "6",
+          "name": "TikTok Content Posting API"
+        }
+      },
+      "notes": "Simplified placeholder: TikTok's real Content Posting API is a multi-step upload (init -> PUT the video bytes to the returned upload_url -> poll status). Replace this single node with that sequence once your TikTok developer app has Content Posting API access approved \u2014 that approval can take days/weeks, which is exactly why 'staged for review' was the safer default; you chose full-auto, so budget time for this approval before relying on it."
+    },
+    {
+      "id": "68ff7043-b45e-48ac-9acf-974e86133efe",
+      "name": "Update Story With Publish Info",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        8640,
+        140
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ \"UPDATE stories SET published_at = NOW() WHERE id = \" + ($('Build State Update Queries').item.json.story_id ?? 'NULL') }}"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "3",
+          "name": "Hostinger MySQL - CoinorChronicles"
+        }
+      },
+      "notes": "Extend the stories table (ALTER TABLE stories ADD COLUMN youtube_id VARCHAR(50), ADD COLUMN tiktok_id VARCHAR(50)) if you want to store the returned platform video IDs here too."
+    },
+    {
+      "id": "ebd9bbd4-891b-4004-9735-58a685e8792e",
+      "name": "Log Pipeline Success",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        8900,
+        140
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO pipeline_logs (clan, status, story_id, error_msg, duration_ms) VALUES ('\" + $('Select Clan').item.json.selected_clan + \"', 'success', \" + ($('Build State Update Queries').item.json.story_id ?? 'NULL') + \", NULL, 0)\" }}"
+      },
+      "credentials": {
+        "mySql": {
+          "id": "3",
+          "name": "Hostinger MySQL - CoinorChronicles"
+        }
+      }
+    },
+    {
+      "id": "887853be-7051-42f4-9d9b-b3f6cf3b7e82",
+      "name": "Note_53",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        -380
+      ],
+      "parameters": {
+        "content": "### A \u00b7 TRIGGER & MARKET DATA\\nRuns every 6h. Pulls CoinGecko prices, computes gold-units/direction per coin, and decides Golden Season / Dark Siege / Waiting Plains. Flat markets stop the run here \u2014 matches run_pipeline.php Steps 1\u20132.",
+        "height": 200,
+        "width": 520,
+        "color": 4
+      }
+    },
+    {
+      "id": "e85f74b4-3d9c-459d-87f1-f0a7095139dd",
+      "name": "Note_54",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        -600
+      ],
+      "parameters": {
+        "content": "### B/C \u00b7 CLAN SELECT & CONTEXT\\nPicks which clan runs (a >12% mover forces its clan; otherwise rotation). Then reads character/heaven state (MySQL), memory + creator override (Airtable), and the live style guide + all 3 prompts straight from your GitHub repo's raw URLs. Edit the docs in GitHub and every future run picks up the change automatically.",
+        "height": 220,
+        "width": 560,
+        "color": 5
+      }
+    },
+    {
+      "id": "690ac97c-bbd5-4ac0-aeeb-b5b34e7d7d04",
+      "name": "Note_55",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2120,
+        -420
+      ],
+      "parameters": {
+        "content": "### D \u00b7 GENERATE + REVIEW\\nClaude writes the episode, a second Claude call reviews it against review_agent.md's checklist. One retry with the review feedback injected, exactly like run_pipeline.php Step 8. Fails twice -> logged and the run stops quietly (no bad episode goes out).",
+        "height": 220,
+        "width": 560,
+        "color": 6
+      }
+    },
+    {
+      "id": "cdd57f86-4cdd-46b8-80f1-fc0fbc98e35d",
+      "name": "Note_56",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3700,
+        -420
+      ],
+      "parameters": {
+        "content": "### E \u00b7 MILESTONES & CELEBRATION\\nChecks every coin in this clan's Gate/Heaven thresholds against what's already recorded. Any new crossing swaps in a full celebration_episode.md-style episode instead of the standard one.",
+        "height": 180,
+        "width": 520,
+        "color": 3
+      }
+    },
+    {
+      "id": "90279a30-6a76-4698-9392-027433b391d0",
+      "name": "Note_57",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4960,
+        -480
+      ],
+      "parameters": {
+        "content": "### F \u00b7 SAVE + STATE\\nInserts the story, asks Claude for a 2-sentence memory summary, writes it to Airtable, then runs one consolidated SQL batch for prices/heavens/settings/rotation log (mirrors updateCharacterPrices/updateHeavenPositions/updateSetting/logClanRotation).",
+        "height": 200,
+        "width": 560,
+        "color": 7
+      }
+    },
+    {
+      "id": "1ebe0af8-a17f-40e0-bf3f-7dad73f7bba1",
+      "name": "Note_58",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        6760,
+        380
+      ],
+      "parameters": {
+        "content": "### G/H \u00b7 VOICE + VIDEO (Phase 2)\\nElevenLabs narrates the full script as Aragorn. ffmpeg overlays the live price data onto a pre-made clan/mood background (your 'reusable library' choice) and muxes in the narration.\\n\\n\u26a0\ufe0f Needs: (1) real backgrounds placed at /data/coinor/backgrounds/, (2) ffmpeg installed in your n8n host/container \u2014 NOT present by default.",
+        "height": 260,
+        "width": 560,
+        "color": 2
+      }
+    },
+    {
+      "id": "0d6ea2a9-3670-47fd-9233-905417366956",
+      "name": "Note_59",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        8280,
+        420
+      ],
+      "parameters": {
+        "content": "### I \u00b7 PUBLISH (fully automatic)\\nUploads straight to YouTube (core YouTube node) and TikTok (placeholder \u2014 see that node's note on the real multi-step upload + required app approval) with no manual review step, as you chose.",
+        "height": 200,
+        "width": 480,
+        "color": 2
+      }
+    },
+    {
+      "id": "1863d0ae-4a7e-4e98-9fec-031d71aaf6e7",
+      "name": "Note_60",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        420
+      ],
+      "parameters": {
+        "content": "### BEFORE YOU IMPORT\\n1. Create credentials named to match: Anthropic API Key, ElevenLabs API Key, Hostinger MySQL, Airtable, YouTube OAuth2, TikTok header auth \u2014 n8n will ask you to map each on import.\\n2. Fill in: Airtable base ID (2 nodes), ARAGORN_VOICE_ID, donation wallet addresses, background image folder, ffmpeg availability.\\n3. Run database_setup.sql on your MySQL instance if you haven't already.\\n4. Create an 'Error Workflow' in n8n settings pointing at a small logger workflow so silent failures (not just the review-fail path) get recorded too.",
+        "height": 320,
+        "width": 560,
+        "color": 1
+      }
+    }
+  ],
+  "connections": {
+    "Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Fetch CoinGecko Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch CoinGecko Prices": {
+      "main": [
+        [
+          {
+            "node": "Normalize Prices & Market Condition",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Prices & Market Condition": {
+      "main": [
+        [
+          {
+            "node": "Is Waiting Plains?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Waiting Plains?": {
+      "main": [
+        [
+          {
+            "node": "Skip - Flat Market",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Recent Clan Rotation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recent Clan Rotation": {
+      "main": [
+        [
+          {
+            "node": "Select Clan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Clan": {
+      "main": [
+        [
+          {
+            "node": "Get All Character Status",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Story Settings",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Story Memory",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Creator Override",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Heaven Positions & Context": {
+      "main": [
+        [
+          {
+            "node": "Fetch Style Guide & Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Character Status": {
+      "main": [
+        [
+          {
+            "node": "Build Heaven Positions & Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Story Settings": {
+      "main": [
+        [
+          {
+            "node": "Build Heaven Positions & Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Story Memory": {
+      "main": [
+        [
+          {
+            "node": "Build Heaven Positions & Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Creator Override": {
+      "main": [
+        [
+          {
+            "node": "Build Heaven Positions & Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Style Guide & Prompts": {
+      "main": [
+        [
+          {
+            "node": "Build Story Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Story Prompt": {
+      "main": [
+        [
+          {
+            "node": "Anthropic - Generate Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic - Generate Story": {
+      "main": [
+        [
+          {
+            "node": "Anthropic - Review Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic - Review Story": {
+      "main": [
+        [
+          {
+            "node": "Parse Review Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Review Result": {
+      "main": [
+        [
+          {
+            "node": "Review Passed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Passed?": {
+      "main": [
+        [
+          {
+            "node": "Parse Story",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Regeneration Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Regeneration Prompt": {
+      "main": [
+        [
+          {
+            "node": "Anthropic - Regenerate Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic - Regenerate Story": {
+      "main": [
+        [
+          {
+            "node": "Anthropic - Review Story (2nd Pass)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic - Review Story (2nd Pass)": {
+      "main": [
+        [
+          {
+            "node": "Parse Review Result (2nd Pass)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Review Result (2nd Pass)": {
+      "main": [
+        [
+          {
+            "node": "Review Passed 2nd Time?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Passed 2nd Time?": {
+      "main": [
+        [
+          {
+            "node": "Parse Story",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Failure Log Entry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Failure Log Entry": {
+      "main": [
+        [
+          {
+            "node": "Log Pipeline Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Story": {
+      "main": [
+        [
+          {
+            "node": "Is Donation Episode?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Donation Episode?": {
+      "main": [
+        [
+          {
+            "node": "Inject Wallet Addresses",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Existing Milestones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inject Wallet Addresses": {
+      "main": [
+        [
+          {
+            "node": "Get Existing Milestones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing Milestones": {
+      "main": [
+        [
+          {
+            "node": "Check Milestones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Milestones": {
+      "main": [
+        [
+          {
+            "node": "Is Celebration?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Celebration?": {
+      "main": [
+        [
+          {
+            "node": "Insert Milestone Record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Finalize Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Milestone Record": {
+      "main": [
+        [
+          {
+            "node": "Build Celebration Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Celebration Prompt": {
+      "main": [
+        [
+          {
+            "node": "Anthropic - Generate Celebration Episode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic - Generate Celebration Episode": {
+      "main": [
+        [
+          {
+            "node": "Parse Celebration Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Celebration Story": {
+      "main": [
+        [
+          {
+            "node": "Finalize Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Story": {
+      "main": [
+        [
+          {
+            "node": "Insert Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Story": {
+      "main": [
+        [
+          {
+            "node": "Anthropic - Summarize Episode",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build State Update Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic - Summarize Episode": {
+      "main": [
+        [
+          {
+            "node": "Update Story Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build State Update Queries": {
+      "main": [
+        [
+          {
+            "node": "Execute State Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute State Updates": {
+      "main": [
+        [
+          {
+            "node": "Had Creator Override?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Had Creator Override?": {
+      "main": [
+        [
+          {
+            "node": "Mark Override Used",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Narration Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Override Used": {
+      "main": [
+        [
+          {
+            "node": "Prepare Narration Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Narration Text": {
+      "main": [
+        [
+          {
+            "node": "Generate Aragorn Narration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Aragorn Narration": {
+      "main": [
+        [
+          {
+            "node": "Save Narration Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Narration Audio": {
+      "main": [
+        [
+          {
+            "node": "Select Background & Build Overlay Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Background & Build Overlay Text": {
+      "main": [
+        [
+          {
+            "node": "Render Episode Video (ffmpeg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Episode Video (ffmpeg)": {
+      "main": [
+        [
+          {
+            "node": "Read Rendered Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Rendered Video": {
+      "main": [
+        [
+          {
+            "node": "Upload to YouTube",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload to TikTok",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to YouTube": {
+      "main": [
+        [
+          {
+            "node": "Update Story With Publish Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to TikTok": {
+      "main": [
+        [
+          {
+            "node": "Update Story With Publish Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Story With Publish Info": {
+      "main": [
+        [
+          {
+            "node": "Log Pipeline Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "coinorV2Pipeline01",
+  "name": "SUPERSEDED - CoinorChronicles v2 (do not activate)",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "Superseded by **CoinorChronicles v3 - Auto Publish**. Kept empty on purpose so it cannot be activated by mistake.",
+        "width": 360,
+        "height": 100
+      },
+      "id": "n",
+      "name": "n",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    }
+  ],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

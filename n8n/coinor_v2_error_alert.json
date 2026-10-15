@@ -1,0 +1,81 @@
+{
+  "id": "coinorErrorAlert01",
+  "name": "CoinorChronicles - Error Alert",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "err_trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const e = $input.first().json;\nconst wf = e.workflow?.name || 'unknown workflow';\nconst node = e.execution?.lastNodeExecuted || 'unknown node';\nconst msg = String(e.execution?.error?.message || 'no message').slice(0, 600);\nreturn [{ json: { text: `🚨 n8n workflow failed: ${wf}\\nNode: ${node}\\n${msg}\\n\\nExecution: ${e.execution?.id || '?'}` } }];"
+      },
+      "id": "err_code",
+      "name": "Format Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "932372452",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "err_tg",
+      "name": "Alert Chairman",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "1ILbERWZVYYmLGe0",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Alert": {
+      "main": [
+        [
+          {
+            "node": "Alert Chairman",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,748 @@
+{
+  "id": "coinorV2Pipeline01",
+  "name": "CoinorChronicles v2 - Draft for Review",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## CoinorChronicles v2 — Draft for Review\n**Nothing here publishes anything.** Each run drafts an episode, a second model call reviews it, and the draft is sent to you on Telegram. You post it yourself.\n\nState (episode number, clan memory, gates/heavens) lives in this workflow's static data, so it only saves on *production* (active) runs, not manual test runs.\n\nActivate only after you have read the checklist in n8n/README_V2.md.",
+        "width": 420,
+        "height": 260
+      },
+      "id": "note_intro",
+      "name": "note_intro",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6,18 * * *"
+            }
+          ]
+        }
+      },
+      "id": "trig_schedule",
+      "name": "Twice Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        240
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "trig_manual",
+      "name": "Manual Test",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.coingecko.com/api/v3/simple/price",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ids",
+              "value": "bitcoin,ethereum,litecoin,binancecoin,ripple,solana,the-open-network,avalanche-2,stellar,tron,cardano,sui,jasmycoin,pepe,shiba-inu,dogecoin,floki,notcoin,book-of-meme,bonk"
+            },
+            {
+              "name": "vs_currencies",
+              "value": "usd"
+            },
+            {
+              "name": "include_24hr_change",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "http_prices",
+      "name": "Fetch CoinGecko Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        320
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "const tickerMap = {\n  bitcoin:'BTC', ethereum:'ETH', litecoin:'LTC', binancecoin:'BNB', ripple:'XRP',\n  solana:'SOL', 'the-open-network':'TON', 'avalanche-2':'AVAX', stellar:'XLM', tron:'TRX',\n  cardano:'ADA', sui:'SUI', jasmycoin:'JASMY', pepe:'PEPE', 'shiba-inu':'SHIB',\n  dogecoin:'DOGE', floki:'FLOKI', notcoin:'NOT', 'book-of-meme':'BOME', bonk:'BONK'\n};\nconst raw = $input.first().json;\nconst prices = {};\nfor (const [cgId, d] of Object.entries(raw)) {\n  const t = tickerMap[cgId];\n  if (!t || typeof d.usd !== 'number') continue;\n  const change = Number(d.usd_24h_change ?? 0);\n  prices[t] = {\n    price: d.usd,\n    change_24h: Math.round(change * 100) / 100,\n    gold_units: Math.round(Math.abs(change) * 10) / 10,\n    direction: change >= 0 ? 'heavier' : 'lighter'\n  };\n}\nif (!prices.BTC || !prices.ETH) throw new Error('CoinGecko returned no BTC/ETH price - refusing to write an episode on bad data');\nconst avg = (prices.BTC.change_24h + prices.ETH.change_24h) / 2;\nlet market_condition = 'waiting_plains';\nif (avg > 0.5) market_condition = 'golden_season';\nelse if (avg < -0.5) market_condition = 'dark_siege';\nreturn [{ json: { prices, market_condition, skip: market_condition === 'waiting_plains' ? 'yes' : 'no' } }];"
+      },
+      "id": "code_norm",
+      "name": "Normalize Prices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if_skip",
+      "name": "Flat Market?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        320
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "noop_skip",
+      "name": "Skip - Flat Market",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        960,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = 'https://raw.githubusercontent.com/GbadeboMotunrayo/coinor-chronicles/main';\nconst files = {\n  world_bible: 'docs/WORLD_BIBLE.md', character_voices: 'docs/CHARACTER_VOICES.md',\n  external_realms: 'docs/EXTERNAL_REALMS.md', cosmology: 'docs/COSMOLOGY.md',\n  script_generator: 'prompts/script_generator.md', review_agent: 'prompts/review_agent.md',\n  celebration_episode: 'prompts/celebration_episode.md'\n};\nconst got = {};\nfor (const [k, p] of Object.entries(files)) {\n  got[k] = await this.helpers.httpRequest({ method: 'GET', url: `${base}/${p}` });\n  if (!got[k] || String(got[k]).length < 200) throw new Error('Style guide file missing or empty: ' + p);\n}\nconst style_guide = [got.world_bible, got.character_voices, got.external_realms, got.cosmology].join('\\n\\n---\\n\\n');\nconst prev = $('Normalize Prices').first().json;\nreturn [{ json: { ...prev, style_guide, script_generator: got.script_generator, review_agent: got.review_agent, celebration_episode: got.celebration_episode } }];"
+      },
+      "id": "code_style",
+      "name": "Fetch Style Guide",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---- world configuration (single source of truth for every Code node) ------\nconst CLANS = {\n  ancients:   { name:'Clan of the Ancients',  territory:'The Obsidian Citadel', coins:['BTC','ETH','LTC','BNB','XRP'] },\n  swift:      { name:'Clan of the Swift',     territory:'The Electric Plains',  coins:['SOL','TON','AVAX','XLM','TRX'] },\n  meme_lords: { name:'Clan of Meme Lords',    territory:'Kekiston Bazaar',      coins:['PEPE','SHIB','DOGE','FLOKI','NOT','BOME','BONK'] },\n  builders:   { name:'Clan of the Builders',  territory:'The Forge of Chains',  coins:['ADA','SUI','JASMY'] }\n};\n// Characters follow docs/CHARACTER_VOICES.md. LINK, UNI, AAVE and INJ have no\n// character in the style guide yet, so they are deliberately not tracked.\nconst CHARACTER = {\n  BTC:'Aragorn', ETH:'Gandalf', LTC:'Samwise', BNB:'Elrond', XRP:'Boromir',\n  SOL:'Legolas', TON:'Eomer', AVAX:'Eowyn', XLM:'Faramir', TRX:'Saruman',\n  ADA:'Treebeard', SUI:'Gimli', JASMY:'Galadriel',\n  PEPE:'Tom Bombadil', SHIB:'Merry', DOGE:'Pippin', FLOKI:'Theoden', NOT:'Frodo', BOME:'Bilbo', BONK:'Gollum'\n};\nconst CLAN_OF = {};\nfor (const [k, c] of Object.entries(CLANS)) for (const coin of c.coins) CLAN_OF[coin] = k;\n// SUI gate prices are an assumption (not in the original design) - confirm.\nconst GATES = {\n  BTC:{gate1:100000,gate2:1000000,gate3:10000000}, ETH:{gate1:10000,gate2:100000,gate3:1000000},\n  SOL:{gate1:1000,gate2:10000,gate3:100000}, XRP:{gate1:100,gate2:1000,gate3:10000},\n  BNB:{gate1:10000,gate2:100000,gate3:1000000}, LTC:{gate1:1000,gate2:10000,gate3:100000},\n  TON:{gate1:10,gate2:100,gate3:1000}, AVAX:{gate1:500,gate2:5000,gate3:50000},\n  XLM:{gate1:5,gate2:50,gate3:500}, TRX:{gate1:1,gate2:10,gate3:100},\n  ADA:{gate1:10,gate2:100,gate3:1000}, SUI:{gate1:10,gate2:100,gate3:1000}, JASMY:{gate1:1,gate2:10,gate3:100},\n  PEPE:{gate1:1,gate2:10,gate3:100}, SHIB:{gate1:0.001,gate2:0.01,gate3:0.1},\n  DOGE:{gate1:10,gate2:100,gate3:1000}, FLOKI:{gate1:1,gate2:10,gate3:100},\n  NOT:{gate1:0.1,gate2:1,gate3:10}, BOME:{gate1:0.1,gate2:1,gate3:10}, BONK:{gate1:1,gate2:10,gate3:100}\n};\nconst MAX_GATE = 3;\nfunction gatePrice(coin, gate) { return (GATES[coin] || {})['gate' + gate]; }\nfunction heavenFor(coin, gate, price) {\n  const gp = gatePrice(coin, gate); if (!gp) return 1;\n  const prev = gate > 1 ? (gatePrice(coin, gate - 1) || 0) : 0;\n  const h = Math.ceil(((price - prev) / (gp - prev)) * 10);\n  return Math.max(1, Math.min(10, h));\n}\nfunction baselineGate(coin, price) {\n  let g = 1;\n  while (g < MAX_GATE && price >= gatePrice(coin, g)) g++;\n  return g;\n}\n\nconst S = $getWorkflowStaticData('global');\nconst inp = $input.first().json;\nconst prices = inp.prices;\nconst tracked = Object.keys(CHARACTER).filter(c => prices[c]);\n\n// --- first run: record a silent baseline, never a celebration ---\nlet firstRun = false;\nif (!S.init) {\n  firstRun = true;\n  S.init = true; S.episode = 0; S.rotation = []; S.milestones = []; S.recent = [];\n  S.memory = {\n    ancients:   { summary: 'The chronicle begins. Aragorn speaks for the first time.', direction: 'Aragorn reclaims his position after the wars.' },\n    swift:      { summary: 'The chronicle begins. The Electric Plains await.',          direction: 'Legolas leads the clan through volatile times.' },\n    meme_lords: { summary: 'The chronicle begins. The Bazaar awakens.',                 direction: 'Merry marches toward his $1 dream. The Bazaar endures.' },\n    builders:   { summary: 'The chronicle begins. The Forge fires are lit.',            direction: 'The Builders construct in silence.' }\n  };\n  S.coins = {};\n  for (const c of tracked) { const g = baselineGate(c, prices[c].price); S.coins[c] = { gate: g, heaven: heavenFor(c, g, prices[c].price), price: prices[c].price }; }\n}\n// coins that appeared later get a silent baseline too\nfor (const c of tracked) if (!S.coins[c]) { const g = baselineGate(c, prices[c].price); S.coins[c] = { gate: g, heaven: heavenFor(c, g, prices[c].price), price: prices[c].price }; }\n\n// --- milestone detection (read-only) ---\nconst candidates = [];\nif (!firstRun) {\n  for (const c of tracked) {\n    const st = S.coins[c]; const p = prices[c].price;\n    if (st.gate < MAX_GATE && p >= gatePrice(c, st.gate)) {\n      const key = `${c}|gate|${st.gate}`;\n      if (!S.milestones.includes(key)) candidates.push({ coin: c, type: 'gate', value: st.gate, key, price: p, character: CHARACTER[c], priority: 2 });\n    } else {\n      const h = heavenFor(c, st.gate, p);\n      if (h > st.heaven) {\n        const key = `${c}|heaven|${st.gate}|${h}`;\n        if (!S.milestones.includes(key)) candidates.push({ coin: c, type: 'heaven', value: h, key, price: p, character: CHARACTER[c], priority: 1 });\n      }\n    }\n  }\n}\ncandidates.sort((a, b) => b.priority - a.priority);\nconst celebration = candidates[0] || null;\n\n// --- clan choice ---\nlet clanKey = null;\nif (celebration) clanKey = CLAN_OF[celebration.coin];\nif (!clanKey) {\n  outer: for (const [k, c] of Object.entries(CLANS)) for (const coin of c.coins) if (prices[coin] && Math.abs(prices[coin].change_24h) > 12) { clanKey = k; break outer; }\n}\nif (!clanKey) clanKey = Object.keys(CLANS).find(k => !S.rotation.includes(k)) || S.rotation[S.rotation.length - 1];\nconst clan = CLANS[clanKey];\n\n// --- prompt ---\nconst coinLines = clan.coins.filter(c => prices[c]).map(c => `  - ${c}: $${prices[c].price} | ${prices[c].change_24h}% | ${prices[c].gold_units} gold units ${prices[c].direction}`).join('\\n');\nconst heavenLines = clan.coins.filter(c => S.coins[c]).map(c => `  - ${CHARACTER[c]}: ${c} | Heaven ${S.coins[c].heaven} of Gate ${S.coins[c].gate} | Last price: $${S.coins[c].price}`).join('\\n');\nconst conditionName = { golden_season:'The Golden Season', dark_siege:'The Dark Siege', waiting_plains:'The Waiting Plains' }[inp.market_condition];\nconst mem = S.memory[clanKey] || { summary: 'The chronicle begins.', direction: '' };\nconst episode = (S.episode || 0) + 1;\n\nconst MEMORY_RULE = `\\n\\nOUTPUT RULE FOR THIS RUN: after everything the style guide requires (including any [SCENE NOTES] block), finish with one final line that starts with [MEMORY] followed by a two-sentence summary of what happened, for next-episode continuity. Do not mention this rule in the story.`;\n\nlet prompt, mode;\nif (celebration) {\n  mode = 'celebration';\n  prompt = `MILESTONE_TYPE: ${celebration.type.toUpperCase()}_CROSSING\nCHARACTER: ${celebration.character}\nCOIN: ${celebration.coin}\nMILESTONE: ${celebration.type === 'gate' ? 'Gate' : 'Heaven'} ${celebration.value}\nPRICE_AT_MILESTONE: $${celebration.price}\nDATE: ${new Date().toISOString().slice(0, 10)}\n\nWrite a full celebration episode for this milestone, following the celebration_episode.md structure exactly.${MEMORY_RULE}`;\n} else {\n  mode = 'story';\n  prompt = `SELECTED_CLAN: ${clan.name} — ${clan.territory}\nMARKET_CONDITION: ${conditionName}\nMARKET_DATA:\n${coinLines}\nLAST_EPISODE_SUMMARY: ${mem.summary}\nSTORY_DIRECTION: ${mem.direction}\nCURRENT_HEAVENS:\n${heavenLines}\nCREATOR_OVERRIDE: None — generate naturally from market data\nSTORY_COUNT: ${episode}\n\nNow write the episode following all rules in the style guide.${MEMORY_RULE}`;\n}\nconst system = 'You are the official story narrator of CoinorChronicles.\\n\\n' + (mode === 'celebration' ? inp.celebration_episode : inp.script_generator) + '\\n\\n' + inp.style_guide;\n\nreturn [{ json: { ...inp, mode, prompt, system, clanKey, clan_name: clan.name, episode, first_run: firstRun, candidates, celebration } }];"
+      },
+      "id": "code_plan",
+      "name": "Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ models: ['google/gemma-4-31b-it:free','nvidia/nemotron-3-super-120b-a12b:free','google/gemma-4-26b-a4b-it:free'], reasoning: { effort: 'low' }, max_tokens: 7000, temperature: 0.9, messages: [ { role: 'system', content: $('Plan').first().json.system }, { role: 'user', content: $('Plan').first().json.prompt } ] }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "llm_gen",
+      "name": "Generate Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        440
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "classDemoOpenRouter",
+          "name": "OpenRouter (class demo)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 8000
+    },
+    {
+      "parameters": {
+        "jsCode": "const res = $input.first().json;\nconst text = res?.choices?.[0]?.message?.content;\nif (!text || String(text).trim().length < 400) throw new Error('Model returned an empty or too-short story: ' + JSON.stringify(res).slice(0, 300));\nconst lines = String(text).trim().split('\\n');\nconst memLine = lines.filter(l => l.trim().startsWith('[MEMORY]')).pop() || '';\nconst story_raw = lines.filter(l => !l.trim().startsWith('[MEMORY]')).join('\\n').trim();\nconst plan = $('Plan').first().json;\nreturn [{ json: { story_raw, memory_line: memLine.replace('[MEMORY]', '').trim(), review_input: 'Review this story script:\\n\\n---\\n' + story_raw + '\\n---', system_review: plan.review_agent } }];"
+      },
+      "id": "code_extract",
+      "name": "Extract Story",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ models: ['google/gemma-4-31b-it:free','nvidia/nemotron-3-super-120b-a12b:free','google/gemma-4-26b-a4b-it:free'], reasoning: { effort: 'low' }, max_tokens: 3000, temperature: 0.9, messages: [ { role: 'system', content: $json.system_review }, { role: 'user', content: $json.review_input } ] }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "llm_review",
+      "name": "Review Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        440
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "classDemoOpenRouter",
+          "name": "OpenRouter (class demo)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 8000
+    },
+    {
+      "parameters": {
+        "jsCode": "const res = $input.first().json;\nconst review = res?.choices?.[0]?.message?.content || '';\nconst unreviewed = review.trim().length < 20;\nconst passed = unreviewed || review.toUpperCase().includes('REVIEW RESULT: PASS');\nconst ex = $('Extract Story').first().json;\nreturn [{ json: { unreviewed, passed: passed ? 'yes' : 'no', review_notes: review, story_raw: ex.story_raw, memory_line: ex.memory_line } }];"
+      },
+      "id": "code_parse",
+      "name": "Parse Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.passed }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if_passed",
+      "name": "Passed Review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2400,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const plan = $('Plan').first().json;\nconst notes = $('Parse Review').first().json.review_notes;\nreturn [{ json: { regen_prompt: plan.prompt + '\\n\\n## PREVIOUS ATTEMPT FAILED REVIEW:\\n' + notes + '\\n\\nFix these issues in your next attempt.' } }];"
+      },
+      "id": "code_regen",
+      "name": "Build Regeneration Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ models: ['google/gemma-4-31b-it:free','nvidia/nemotron-3-super-120b-a12b:free','google/gemma-4-26b-a4b-it:free'], reasoning: { effort: 'low' }, max_tokens: 7000, temperature: 0.9, messages: [ { role: 'system', content: $('Plan').first().json.system }, { role: 'user', content: $json.regen_prompt } ] }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "llm_regen",
+      "name": "Regenerate Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2880,
+        640
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "classDemoOpenRouter",
+          "name": "OpenRouter (class demo)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 8000
+    },
+    {
+      "parameters": {
+        "jsCode": "const res = $input.first().json;\nconst text = res?.choices?.[0]?.message?.content;\nif (!text || String(text).trim().length < 400) throw new Error('Regeneration returned an empty or too-short story');\nconst lines = String(text).trim().split('\\n');\nconst memLine = lines.filter(l => l.trim().startsWith('[MEMORY]')).pop() || '';\nconst story_raw = lines.filter(l => !l.trim().startsWith('[MEMORY]')).join('\\n').trim();\nconst plan = $('Plan').first().json;\nreturn [{ json: { story_raw, memory_line: memLine.replace('[MEMORY]', '').trim(), review_input: 'Review this story script:\\n\\n---\\n' + story_raw + '\\n---', system_review: plan.review_agent } }];"
+      },
+      "id": "code_extract2",
+      "name": "Extract Story (2nd)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ models: ['google/gemma-4-31b-it:free','nvidia/nemotron-3-super-120b-a12b:free','google/gemma-4-26b-a4b-it:free'], reasoning: { effort: 'low' }, max_tokens: 3000, temperature: 0.9, messages: [ { role: 'system', content: $json.system_review }, { role: 'user', content: $json.review_input } ] }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "llm_review2",
+      "name": "Review Draft (2nd)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3360,
+        640
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "classDemoOpenRouter",
+          "name": "OpenRouter (class demo)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 8000
+    },
+    {
+      "parameters": {
+        "jsCode": "const res = $input.first().json;\nconst review = res?.choices?.[0]?.message?.content || '';\nconst unreviewed = review.trim().length < 20;\nconst passed = unreviewed || review.toUpperCase().includes('REVIEW RESULT: PASS');\nconst ex = $('Extract Story (2nd)').first().json;\nreturn [{ json: { unreviewed, passed: passed ? 'yes' : 'no', review_notes: review, story_raw: ex.story_raw, memory_line: ex.memory_line } }];"
+      },
+      "id": "code_parse2",
+      "name": "Parse Review (2nd)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.passed }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if_passed2",
+      "name": "Passed 2nd Review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3840,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const plan = $('Plan').first().json;\nconst notes = ($input.first().json.review_notes || '').slice(0, 800);\nreturn [{ json: { text: `⚠️ CoinorChronicles: episode ${plan.episode} (${plan.clan_name}) failed the quality review twice. No draft was produced and no state was changed.\\n\\nReviewer notes:\\n${notes}` } }];"
+      },
+      "id": "code_fail",
+      "name": "Build Failure Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4080,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "932372452",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "tg_fail",
+      "name": "Alert - Failed Review",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4320,
+        760
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "1ILbERWZVYYmLGe0",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---- world configuration (single source of truth for every Code node) ------\nconst CLANS = {\n  ancients:   { name:'Clan of the Ancients',  territory:'The Obsidian Citadel', coins:['BTC','ETH','LTC','BNB','XRP'] },\n  swift:      { name:'Clan of the Swift',     territory:'The Electric Plains',  coins:['SOL','TON','AVAX','XLM','TRX'] },\n  meme_lords: { name:'Clan of Meme Lords',    territory:'Kekiston Bazaar',      coins:['PEPE','SHIB','DOGE','FLOKI','NOT','BOME','BONK'] },\n  builders:   { name:'Clan of the Builders',  territory:'The Forge of Chains',  coins:['ADA','SUI','JASMY'] }\n};\n// Characters follow docs/CHARACTER_VOICES.md. LINK, UNI, AAVE and INJ have no\n// character in the style guide yet, so they are deliberately not tracked.\nconst CHARACTER = {\n  BTC:'Aragorn', ETH:'Gandalf', LTC:'Samwise', BNB:'Elrond', XRP:'Boromir',\n  SOL:'Legolas', TON:'Eomer', AVAX:'Eowyn', XLM:'Faramir', TRX:'Saruman',\n  ADA:'Treebeard', SUI:'Gimli', JASMY:'Galadriel',\n  PEPE:'Tom Bombadil', SHIB:'Merry', DOGE:'Pippin', FLOKI:'Theoden', NOT:'Frodo', BOME:'Bilbo', BONK:'Gollum'\n};\nconst CLAN_OF = {};\nfor (const [k, c] of Object.entries(CLANS)) for (const coin of c.coins) CLAN_OF[coin] = k;\n// SUI gate prices are an assumption (not in the original design) - confirm.\nconst GATES = {\n  BTC:{gate1:100000,gate2:1000000,gate3:10000000}, ETH:{gate1:10000,gate2:100000,gate3:1000000},\n  SOL:{gate1:1000,gate2:10000,gate3:100000}, XRP:{gate1:100,gate2:1000,gate3:10000},\n  BNB:{gate1:10000,gate2:100000,gate3:1000000}, LTC:{gate1:1000,gate2:10000,gate3:100000},\n  TON:{gate1:10,gate2:100,gate3:1000}, AVAX:{gate1:500,gate2:5000,gate3:50000},\n  XLM:{gate1:5,gate2:50,gate3:500}, TRX:{gate1:1,gate2:10,gate3:100},\n  ADA:{gate1:10,gate2:100,gate3:1000}, SUI:{gate1:10,gate2:100,gate3:1000}, JASMY:{gate1:1,gate2:10,gate3:100},\n  PEPE:{gate1:1,gate2:10,gate3:100}, SHIB:{gate1:0.001,gate2:0.01,gate3:0.1},\n  DOGE:{gate1:10,gate2:100,gate3:1000}, FLOKI:{gate1:1,gate2:10,gate3:100},\n  NOT:{gate1:0.1,gate2:1,gate3:10}, BOME:{gate1:0.1,gate2:1,gate3:10}, BONK:{gate1:1,gate2:10,gate3:100}\n};\nconst MAX_GATE = 3;\nfunction gatePrice(coin, gate) { return (GATES[coin] || {})['gate' + gate]; }\nfunction heavenFor(coin, gate, price) {\n  const gp = gatePrice(coin, gate); if (!gp) return 1;\n  const prev = gate > 1 ? (gatePrice(coin, gate - 1) || 0) : 0;\n  const h = Math.ceil(((price - prev) / (gp - prev)) * 10);\n  return Math.max(1, Math.min(10, h));\n}\nfunction baselineGate(coin, price) {\n  let g = 1;\n  while (g < MAX_GATE && price >= gatePrice(coin, g)) g++;\n  return g;\n}\n\n// Apply state ONLY now that an episode passed review.\nconst S = $getWorkflowStaticData('global');\nconst plan = $('Plan').first().json;\nconst pr = $input.first().json;            // the passing review result\nconst prices = plan.prices;\n\n// 1. milestone bookkeeping: every detected crossing is marked as passed so it never re-fires\nfor (const m of plan.candidates || []) { if (!S.milestones.includes(m.key)) S.milestones.push(m.key); }\n// 2. silent state sync for every tracked coin\nfor (const c of Object.keys(S.coins)) {\n  if (!prices[c]) continue;\n  const st = S.coins[c];\n  const crossedGate = (plan.candidates || []).some(m => m.coin === c && m.type === 'gate');\n  if (crossedGate && st.gate < MAX_GATE) { st.gate += 1; }\n  st.heaven = heavenFor(c, st.gate, prices[c].price);\n  st.price = prices[c].price;\n}\n// 3. episode, rotation, memory\nS.episode = plan.episode;\nS.rotation = [plan.clanKey, ...(S.rotation || []).filter(k => k !== plan.clanKey)].slice(0, 4);\nconst summary = pr.memory_line && pr.memory_line.length > 20 ? pr.memory_line : pr.story_raw.replace(/\\[SCENE NOTES\\][\\s\\S]*$/, '').trim().slice(-280);\nS.memory[plan.clanKey] = { summary, direction: (S.memory[plan.clanKey] || {}).direction || '' };\n\n// 4. parse title/body, keep a short archive of drafts\nlet title = pr.story_raw.trim().split('\\n')[0].replace(/[*#]/g, '').trim().slice(0, 200);\nconst sceneIdx = pr.story_raw.indexOf('[SCENE NOTES]');\nconst body = (sceneIdx >= 0 ? pr.story_raw.slice(0, sceneIdx) : pr.story_raw).trim();\nconst scene = sceneIdx >= 0 ? pr.story_raw.slice(sceneIdx).trim() : '';\nS.recent = [{ ep: plan.episode, title, clan: plan.clanKey, mode: plan.mode, date: new Date().toISOString().slice(0, 10) }, ...(S.recent || [])].slice(0, 30);\n\nconst label = plan.mode === 'celebration' ? `CELEBRATION (${plan.celebration.character}, ${plan.celebration.coin} ${plan.celebration.type} ${plan.celebration.value})` : plan.clan_name;\nconst flag = pr.unreviewed ? '⚠️ The automatic quality review was unavailable for this draft. Read it carefully.\\n' : '✅ Passed the automatic quality review.\\n';\nconst header = `📜 CoinorChronicles — Episode ${plan.episode} DRAFT\\n${label} · ${plan.market_condition.replace('_', ' ')}\\n${flag}Review before posting. NOTHING has been published.\\n\\n`;\n\n// 5. Telegram limit is 4096 chars: split on paragraph boundaries\nconst full = header + body + (scene ? '\\n\\n' + scene : '');\nconst chunks = []; let cur = '';\nfor (const para of full.split('\\n\\n')) {\n  if ((cur + '\\n\\n' + para).length > 3800) { if (cur) chunks.push(cur); cur = para.slice(0, 3800); }\n  else cur = cur ? cur + '\\n\\n' + para : para;\n}\nif (cur) chunks.push(cur);\nreturn chunks.map((t, i) => ({ json: { text: chunks.length > 1 ? `(${i + 1}/${chunks.length})\\n` + t : t } }));"
+      },
+      "id": "code_commit",
+      "name": "Commit State & Build Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4080,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "932372452",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "tg_draft",
+      "name": "Send Draft to Chairman",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4320,
+        440
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "1ILbERWZVYYmLGe0",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Twice Daily": {
+      "main": [
+        [
+          {
+            "node": "Fetch CoinGecko Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Test": {
+      "main": [
+        [
+          {
+            "node": "Fetch CoinGecko Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch CoinGecko Prices": {
+      "main": [
+        [
+          {
+            "node": "Normalize Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Prices": {
+      "main": [
+        [
+          {
+            "node": "Flat Market?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flat Market?": {
+      "main": [
+        [
+          {
+            "node": "Skip - Flat Market",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Style Guide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Style Guide": {
+      "main": [
+        [
+          {
+            "node": "Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan": {
+      "main": [
+        [
+          {
+            "node": "Generate Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Draft": {
+      "main": [
+        [
+          {
+            "node": "Extract Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Story": {
+      "main": [
+        [
+          {
+            "node": "Review Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Draft": {
+      "main": [
+        [
+          {
+            "node": "Parse Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Review": {
+      "main": [
+        [
+          {
+            "node": "Passed Review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Passed Review?": {
+      "main": [
+        [
+          {
+            "node": "Commit State & Build Draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Regeneration Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Regeneration Prompt": {
+      "main": [
+        [
+          {
+            "node": "Regenerate Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regenerate Draft": {
+      "main": [
+        [
+          {
+            "node": "Extract Story (2nd)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Story (2nd)": {
+      "main": [
+        [
+          {
+            "node": "Review Draft (2nd)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Draft (2nd)": {
+      "main": [
+        [
+          {
+            "node": "Parse Review (2nd)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Review (2nd)": {
+      "main": [
+        [
+          {
+            "node": "Passed 2nd Review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Passed 2nd Review?": {
+      "main": [
+        [
+          {
+            "node": "Commit State & Build Draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Failure Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Failure Message": {
+      "main": [
+        [
+          {
+            "node": "Alert - Failed Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit State & Build Draft": {
+      "main": [
+        [
+          {
+            "node": "Send Draft to Chairman",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "coinorErrorAlert01",
+    "timezone": "Africa/Lagos"
+  }
+}
