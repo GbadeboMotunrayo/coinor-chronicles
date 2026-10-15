@@ -32,7 +32,7 @@ It is a script on a schedule, not an AI agent that decides things; the AI only w
 | Dry run (writes nothing) | `python3 /usr/local/lib/coinor/coinor.py run --dry-run` |
 
 Logs: `/var/log/coinor/run.log`. Failures send a Telegram alert (n8n error workflow and the 15-minute watchdog,
-which also alerts if the engine has not run for 14 hours, or the feed or this site is unreachable).
+which also alerts if the engine has not run for 8 hours, or the feed or this site is unreachable).
 
 ## Files
 
