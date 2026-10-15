@@ -307,6 +307,39 @@ class FourADay(Cycle):
         self.assertEqual(self.run_()["outcome"], "skipped_cap")
 
 
+class ModelPools(unittest.TestCase):
+    def eng(self, calls, **cfg):
+        e = C.Engine(dict(C.DEFAULT_CFG, log_path="/dev/null", **cfg), now=lambda: dt.datetime(2026, 10, 16, tzinfo=dt.timezone.utc))
+        def fake(system, user, mt, models, timeout, temp):
+            calls.append(list(models))
+            return calls_answers.pop(0)
+        e._openrouter = fake
+        return e
+
+    def test_second_pool_is_tried_when_first_fails(self):
+        global calls_answers
+        calls, calls_answers = [], [(None, "http 429"), ("a story", "nvidia/x")]
+        text, model = self.eng(calls)._real_llm("s", "u", 100)
+        self.assertEqual((text, model), ("a story", "nvidia/x"))
+        self.assertEqual(calls[0], C.DEFAULT_CFG["models"])
+        self.assertEqual(calls[1], C.DEFAULT_CFG["fallback_pools"][0])
+
+    def test_paid_pool_is_last_and_only_when_configured(self):
+        global calls_answers
+        calls, calls_answers = [], [(None, "x"), (None, "x")]
+        text, _ = self.eng(calls)._real_llm("s", "u", 100)
+        self.assertIsNone(text); self.assertEqual(len(calls), 2)          # no paid call by default
+        calls, calls_answers = [], [(None, "x"), (None, "x"), ("paid answer", "x-ai/grok-4.3")]
+        text, model = self.eng(calls, paid_models=["x-ai/grok-4.3"])._real_llm("s", "u", 100)
+        self.assertEqual(model, "x-ai/grok-4.3"); self.assertEqual(calls[-1], ["x-ai/grok-4.3"])
+
+    def test_named_models_are_not_expanded(self):
+        global calls_answers
+        calls, calls_answers = [], [("ok", "m")]
+        self.eng(calls)._real_llm("s", "u", 10, models=["only/this:free"])
+        self.assertEqual(calls, [["only/this:free"]])
+
+
 class StaffControls(Cycle):
     def setUp(self):
         super().setUp()

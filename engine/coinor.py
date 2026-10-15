@@ -46,6 +46,10 @@ DEFAULT_CFG = {
     "site_url": "https://coinorchonicles.space",
     "raw_base": "https://raw.githubusercontent.com/GbadeboMotunrayo/coinor-chronicles/main",
     "models": ["google/gemma-4-31b-it:free", "nvidia/nemotron-3-super-120b-a12b:free", "google/gemma-4-26b-a4b-it:free"],
+    # tried in order, one pool per call, when the whole previous pool failed (rate limit, outage, empty answer)
+    "fallback_pools": [["nvidia/nemotron-3-ultra-550b-a55b:free", "thinkingmachines/inkling:free", "poolside/laguna-s-2.1:free"]],
+    # PAID last resort, off by default (needs OpenRouter credit). Example: ["x-ai/grok-4.3"] in /etc/coinor/config.json
+    "paid_models": [],
     "review_models": ["poolside/laguna-s-2.1:free", "google/gemma-4-26b-a4b-it:free"],
     "review_blocks": False,   # advisory by default: the rule checker in code is the gate
     "review_timeout": 90,
@@ -257,7 +261,23 @@ class Engine:
         raise RuntimeError("OPENROUTER_API_KEY not found")
 
     def _real_llm(self, system, user, max_tokens, models=None, timeout=240, temperature=0.9):
-        body = json.dumps({"models": models or self.cfg["models"], "max_tokens": max_tokens, "temperature": temperature,
+        if models:                                   # a caller that names its models gets exactly those
+            return self._openrouter(system, user, max_tokens, models, timeout, temperature)
+        pools = [self.cfg["models"]] + [p for p in self.cfg.get("fallback_pools", []) if p]
+        if self.cfg.get("paid_models"):
+            pools.append(self.cfg["paid_models"])
+        text, used = None, "none"
+        for i, pool in enumerate(pools):
+            text, used = self._openrouter(system, user, max_tokens, pool, timeout, temperature)
+            if text:
+                if i:
+                    self.log("llm_fallback_pool_used", pool=i, model=used)
+                return text, used
+            self.log("llm_pool_failed", pool=i, why=used)
+        return None, used
+
+    def _openrouter(self, system, user, max_tokens, models, timeout, temperature):
+        body = json.dumps({"models": models, "max_tokens": max_tokens, "temperature": temperature,
                            "reasoning": {"effort": "low"},
                            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}).encode()
         req = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", body, {
