@@ -1,0 +1,11 @@
+[Unit]
+Description=CoinorChronicles daily video (free tools: Piper, ffmpeg)
+After=network.target
+
+[Service]
+Type=oneshot
+User=hermes
+Group=hermes
+Nice=10
+TimeoutStartSec=2400
+ExecStart=/usr/bin/python3 /usr/local/lib/coinor/coinor_video.py make

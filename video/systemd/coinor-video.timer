@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily video, 19:15 Africa/Lagos (18:15 UTC), after the evening chapter
+
+[Timer]
+OnCalendar=*-*-* 18:15:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
