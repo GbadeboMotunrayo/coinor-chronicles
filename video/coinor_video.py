@@ -35,6 +35,9 @@ CFG = {
     "yt_privacy": "private",        # unverified API projects are private by YouTube's rule; the Chairman publishes
     "chairman": "telegram:932372452",
     "image_tries": 3,
+    "gemini_image_models": ["gemini-2.5-flash-image", "gemini-3.1-flash-lite-image"],   # tried in order; the free tier decides which work
+    "characters_file": "/opt/coinor-video/characters.json",
+    "character_dir": "/opt/coinor-video/characters",
     "image_gap": 7,                 # seconds between requests: the free service rate-limits bursts
 }
 
@@ -125,6 +128,84 @@ def image_prompt(scene, seed_text=""):
         p = re.sub(r"\b" + re.escape(name) + r"(?:'s)?\b", look, p)
     p = re.sub(r"\b(?:Heaven|Gate)\s*\d+\b", "the great gate", p)
     return f"{p}, {STYLE}"
+
+
+# ----------------------------------------------------------------------------- consistent characters (Gemini)
+def load_cast():
+    d = read_json(CFG["characters_file"], None) or read_json(os.path.join(os.path.dirname(os.path.abspath(__file__)), "characters.json"), {})
+    return d.get("style", STYLE), d.get("characters", {})
+
+
+def cast_in(scene, cast, limit=2):
+    found = [(scene.find(n), n) for n in cast if re.search(r"\b" + re.escape(n) + r"\b", scene)]
+    return [n for _, n in sorted(found)][:limit]
+
+
+def find_image(obj):
+    """Return the bytes of the last base64 image anywhere in a Gemini reply, whatever the reply's shape."""
+    import base64
+    hits = []
+    def walk(o):
+        if isinstance(o, dict):
+            d = o.get("data") or (o.get("inlineData") or o.get("inline_data") or {}).get("data")
+            mt = str(o.get("mime_type") or o.get("mimeType") or (o.get("inlineData") or o.get("inline_data") or {}).get("mimeType") or "")
+            if isinstance(d, str) and len(d) > 2000 and (o.get("type") == "image" or mt.startswith("image/") or "inlineData" in o or "inline_data" in o):
+                hits.append(d)
+            for v in o.values():
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+    walk(obj)
+    return base64.b64decode(hits[-1]) if hits else None
+
+
+def gemini_image(prompt, refs, dest, key, urlopen=urllib.request.urlopen):
+    """One picture from Gemini, with up to 2 reference pictures so the same face and clothes come back.
+    Tries the documented Interactions API, then the older generateContent. Returns True on success; False on any refusal."""
+    import base64
+    ref_b64 = [base64.b64encode(open(r, "rb").read()).decode() for r in refs if os.path.exists(r)]
+    for model in CFG["gemini_image_models"]:
+        attempts = [
+            ("https://generativelanguage.googleapis.com/v1beta/interactions",
+             {"model": model, "input": [{"type": "text", "text": prompt}] + [{"type": "image", "mime_type": "image/png", "data": b} for b in ref_b64],
+              "response_format": {"type": "image", "mime_type": "image/png", "aspect_ratio": "9:16"}}),
+            (f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+             {"contents": [{"parts": [{"text": prompt}] + [{"inlineData": {"mimeType": "image/png", "data": b}} for b in ref_b64]}],
+              "generationConfig": {"responseModalities": ["IMAGE"], "imageConfig": {"aspectRatio": "9:16"}}}),
+        ]
+        for url, body in attempts:
+            try:
+                req = urllib.request.Request(url, json.dumps(body).encode(), {"Content-Type": "application/json", "x-goog-api-key": key})
+                img = find_image(json.loads(urlopen(req, timeout=120).read()))
+                if img and len(img) > 5000:
+                    open(dest, "wb").write(img)
+                    return True
+            except urllib.error.HTTPError as e:
+                log("gemini_image_http", model=model, code=e.code)
+                if e.code == 429:
+                    return False            # out of quota: stop spending requests this run
+            except Exception as e:
+                log("gemini_image_error", model=model, why=type(e).__name__)
+    return False
+
+
+def character_ref(name, cast, style, key):
+    """The reference sheet for one character, made once and kept, so every later picture can copy it."""
+    os.makedirs(CFG["character_dir"], exist_ok=True)
+    p = os.path.join(CFG["character_dir"], re.sub(r"\W+", "_", name.lower()) + ".png")
+    if os.path.exists(p):
+        return p
+    prompt = (f"Character reference sheet. Full-body front view of {name}: {cast[name]}. Plain neutral parchment-grey background, "
+              f"centred, the whole figure visible, one figure only. Style: {style}.")
+    return p if gemini_image(prompt, [], p, key) else None
+
+
+def scene_prompt_gemini(scene, names, cast, style):
+    who = "; ".join(f"{n} is {cast[n]}" for n in names)
+    t = re.sub(r"\b(?:Heaven|Gate)\s*\d+\b", "the great gate", scene)
+    keep = "Keep each character exactly as in the reference pictures: same face, hair, clothes and colours. " if names else ""
+    return f"{keep}Draw this scene as a vertical 9:16 picture: {t}. {('Characters: ' + who + '. ') if who else ''}Style: {style}."
 
 
 # ----------------------------------------------------------------------------- pictures
@@ -226,8 +307,17 @@ def build(ep, work, out_mp4):
     total = t + 0.8
     # 2. pictures
     sc = scenes(ep); imgs = []
+    style, cast = load_cast(); gkey = env_value("GEMINI_API_KEY"); gem_ok = bool(gkey); gem_fail = 0
     for i, scene in enumerate(sc):
         p = f"{work}/img{i}.jpg"
+        if gem_ok:
+            names = cast_in(scene, cast)
+            refs = [r for r in (character_ref(n, cast, style, gkey) for n in names) if r]
+            if gemini_image(scene_prompt_gemini(scene, names, cast, style), refs, p, gkey):
+                imgs.append(p); log("scene_gemini", scene=i, characters=names); continue
+            gem_fail += 1
+            if gem_fail >= 2:
+                gem_ok = False          # two misses in a row (quota or outage): stop spending requests this run
         if i:
             time.sleep(CFG["image_gap"])
         if not fetch_image(image_prompt(scene), ep["number"] * 10 + i, p):
@@ -270,7 +360,7 @@ def build(ep, work, out_mp4):
     # 6. final: pictures + captions + labels + sound
     label = esc(f"CoinorChronicles  ·  Episode {ep['number']}")
     foot = esc("coinorchonicles.space")
-    note = esc("Fiction · AI art via Pollinations · Not financial advice")
+    note = esc("Fiction · AI-made pictures · Not financial advice")
     vf = (f"subtitles={ass}:fontsdir=/usr/share/fonts/truetype/dejavu,"
           f"drawtext=fontfile={CFG['font_sans']}:text='{label}':fontcolor=white@0.92:fontsize=40:x=(w-text_w)/2:y=96:box=1:boxcolor=black@0.35:boxborderw=18,"
           f"drawtext=fontfile={CFG['font_serif']}:text='{foot}':fontcolor=0xf0d9a0:fontsize=44:x=(w-text_w)/2:y=h-170,"
@@ -288,7 +378,7 @@ def metadata(ep):
     return {
         "title": title[:100],
         "description": (f"{blurb}\n\nRead the whole chapter: {url}\n\nCoinorChronicles is an ongoing fantasy saga set in the Realm of Coinor. "
-                        "The story and pictures are made with AI (pictures via Pollinations.ai) and published after automatic safety checks. It is fiction, not financial advice.\n\n"
+                        "The story and pictures are made with AI (pictures via Google Gemini or Pollinations.ai) and published after automatic safety checks. It is fiction, not financial advice.\n\n"
                         f"Support the journey: {CFG['site']}/support\n\n#shorts #fantasy #story #AIstory"),
         "tags": ["fantasy saga", "Realm of Coinor", "Book of Meme", "AI story", "fantasy shorts", "serialized fiction"],
         "category": "24", "synthetic": True, "chapter": url,

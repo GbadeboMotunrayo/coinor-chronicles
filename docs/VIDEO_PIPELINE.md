@@ -5,7 +5,8 @@
 ```
 feed (today's chapter, Lagos date) -> narration (first ~125 words + a closing line)
    -> voice: Piper, en_GB-alan-medium, a little lower and slower      (free, offline)
-   -> 5 pictures from the chapter's own scene lines                  (Pollinations, free; mirrored reuse if it is busy)
+   -> 5 pictures from the chapter's own scene lines                  (Gemini with character reference sheets when GEMINI_API_KEY exists;
+                                                                     else Pollinations, free; mirrored reuse if both are busy)
    -> ffmpeg: slow zooms, burned-in captions, labels, a drone made by ffmpeg, loudness-normalised
    -> /var/www/coinor/video/coinor-DATE-epN.mp4 (+ .json with title, description, tags), served at https://coinor.2-24-128-252.sslip.io/video/
    -> Telegram note to the Chairman with the link
@@ -38,3 +39,16 @@ No chapter that day (a flat market) = no video. Files older than 14 days are del
 - **Pictures**: the free image service sometimes refuses or slows down; the pipeline retries, then reuses a good picture mirrored. Quality varies and is not guaranteed.
 - **Likeness**: characters are drawn from plain descriptions, not film designs, but the story names are Tolkien's. That is a legal risk the Chairman accepted for the project; the pictures avoid copying any film.
 - **Voice**: Piper is a good free voice, not a studio actor.
+
+## Consistent characters (Gemini)
+`video/characters.json` is the **character bible**: one fixed written look for each of the 21 characters (our own designs, not film designs) plus the house style line.
+When a scene names a character, the pipeline makes that character's **reference sheet** once (kept in `/opt/coinor-video/characters/`), then hands up to two
+reference sheets to Gemini with every scene that character appears in, with the instruction to keep the same face, hair, clothes and colours.
+To change a character, edit its line in `characters.json` and delete its file in `/opt/coinor-video/characters/` so a new sheet is drawn.
+If Gemini refuses twice in a run (quota, outage) the rest of that run falls back to Pollinations. Image model names are in `gemini_image_models`; the free tier decides which work.
+
+## One-time setup the Chairman does
+1. **Gemini key** (free, from aistudio.google.com): add it to the server without showing it:
+   `ssh mgvps 'read -s -p "Gemini key: " k; echo; echo "GEMINI_API_KEY=$k" | sudo tee -a /home/hermes/.hermes/.env >/dev/null'`
+2. **YouTube**: see `get_youtube_token.py` (run on the laptop). Needs a Google Cloud project with YouTube Data API v3 enabled, an OAuth consent screen
+   (External, **published to "In production"**; in "Testing" Google expires the key after 7 days) and a **Desktop app** OAuth client. Then send `yt_keys.env` to the server as the script prints.
