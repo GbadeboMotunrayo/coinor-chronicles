@@ -21,8 +21,9 @@
     var form = el('form', { class: 'sub-form', novalidate: '' }, [
       el('label', { for: id + '-email', class: 'sub-label', text: 'Your email' }), email,
       el('div', { class: 'sub-trap', 'aria-hidden': 'true' }, [trap]),
-      el('label', { class: 'sub-consent', for: id + '-consent' }, [consent, ' I agree to get the weekly newsletter by email, and I know I can unsubscribe at any time. ',
-        el('a', { href: '/privacy', text: 'How we treat your address' })]),
+      el('label', { class: 'sub-consent', for: id + '-consent' }, [consent,
+        el('span', {}, ['I agree to get the weekly newsletter by email, and I know I can unsubscribe at any time. ',
+          el('a', { href: '/privacy', text: 'How we treat your address' }), '.'])]),
       btn, msg
     ]);
     host.className = 'subscribe';

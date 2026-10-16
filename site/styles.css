@@ -256,3 +256,28 @@ img,svg{max-width:100%}
 html:not(.coin-js) .wallet-panel{margin-bottom:12px}
 .wallet-panel .wallet-qr img{width:150px;height:150px}
 @media (max-width:640px){.wallet-panel{grid-template-columns:1fr;justify-items:center;text-align:center}.coins{justify-content:center}.addr{text-align:left}}
+
+/* ====================== tidy pass (16 Oct 2026): plain backdrop, clean signup ====================== */
+body{background:#17110b;background-image:none}
+main{min-height:0;padding-bottom:12px}
+.road{margin-top:18px}
+
+.subscribe{margin:34px 0 6px;padding:24px 22px 20px;border:1px solid var(--rule);border-radius:8px;background:rgba(255,245,215,.32);text-align:center}
+.subscribe h2{display:block;margin:0 0 .25em;font-size:1.35rem}
+.subscribe h2::after{display:none}
+.sub-lede{max-width:46ch;margin:0 auto 16px;color:var(--ink-2);font-size:1rem;line-height:1.55}
+.sub-form{display:grid;grid-template-columns:1fr auto;gap:12px;max-width:540px;margin:0 auto;text-align:left;align-items:stretch}
+.sub-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sub-form input[type=email]{grid-column:1;grid-row:1;min-width:0;height:46px;box-sizing:border-box;padding:0 14px;font:1rem var(--sans);border:1px solid var(--ink-2);border-radius:6px;background:#f8efd4;color:var(--ink)}
+.sub-form .btn{grid-column:2;grid-row:1;height:46px;padding:0 20px;justify-self:stretch;white-space:nowrap;background:var(--ink);color:#ecd9a8;border-color:var(--ink);border-radius:6px}
+.sub-form .btn:hover{background:var(--rubric);border-color:var(--rubric)}
+.sub-consent{grid-column:1/-1;grid-row:2;display:flex;gap:10px;align-items:flex-start;font:.84rem/1.5 var(--sans);color:var(--ink-2)}
+.sub-consent input{flex:none;margin-top:2px}
+.sub-msg{grid-column:1/-1;grid-row:3;min-height:1.3em;margin:0;text-align:center;font:.9rem var(--sans)}
+@media (max-width:520px){
+  .subscribe{padding:20px 14px 16px}
+  .sub-form{grid-template-columns:1fr}
+  .sub-form input[type=email],.sub-form .btn{grid-column:1;height:48px}
+  .sub-form input[type=email]{grid-row:1}.sub-form .btn{grid-row:3}
+  .sub-consent{grid-row:2}.sub-msg{grid-row:4}
+}

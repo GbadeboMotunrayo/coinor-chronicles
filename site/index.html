@@ -19,24 +19,6 @@
 </head>
 <body>
 <a class="skip" href="#app">Skip to the chronicle</a>
-<div class="realm-bg" aria-hidden="true">
-  <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" fill="none" stroke="#c9a24a" stroke-linecap="round">
-    <defs><path id="ct" d="M-50 520C120 420 260 560 420 470S700 330 880 430 1180 560 1350 440 1560 380 1660 430"/></defs>
-    <g opacity=".11" stroke-width="1.2">
-      <use href="#ct"/><use href="#ct" transform="translate(0 70)"/><use href="#ct" transform="translate(0 140)"/>
-      <use href="#ct" transform="translate(0 -70)"/><use href="#ct" transform="translate(0 -140)"/>
-      <use href="#ct" transform="translate(0 -210)"/><use href="#ct" transform="translate(0 210)"/><use href="#ct" transform="translate(0 280)"/>
-      <use href="#ct" transform="translate(0 -280)"/><use href="#ct" transform="translate(0 350)"/><use href="#ct" transform="translate(0 -350)"/>
-    </g>
-    <g opacity=".16" stroke-width="1.4"><path d="M120 760l30-50 24 34 22-26 34 42z"/><path d="M1320 250l36-60 28 40 26-30 40 50z"/><path d="M1180 820l24-38 18 26 16-20 28 32z"/></g>
-    <g class="compass" opacity=".2" stroke-width="1.5" transform="translate(1440 840)">
-      <circle r="56"/><circle r="40" opacity=".5"/><path d="M0 -78V78M-78 0H78" /><path d="M0 -78l8 22h-16z M0 78l8-22h-16z" fill="#c9a24a"/>
-    </g>
-    <path class="far-route" d="M140 880C320 700 420 820 620 640S860 420 1040 480 1300 300 1460 130" stroke-dasharray="3 12" stroke-width="2.4" opacity=".28"/>
-    <g class="far-gate" transform="translate(1460 120)" opacity=".5"><path d="M-26 40V-6a26 26 0 0 1 52 0v46" stroke-width="3"/><circle r="64" opacity=".18" stroke-width="1"/></g>
-  </svg>
-</div>
-<canvas id="embers" aria-hidden="true"></canvas>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <filter id="rough" x="-5%" y="-2%" width="110%" height="104%">
     <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="n"/>
@@ -66,7 +48,7 @@
 </header>
 <div id="preview-banner" class="preview" hidden>Preview mode: you are seeing sample episodes that are <strong>not published</strong>. Visitors do not see this.</div>
 <main id="app" tabindex="-1"><p class="muted">Opening the Book of Meme…</p></main>
-<div data-subscribe style="margin-bottom:26px"></div>
+<div data-subscribe></div>
 <footer class="site-footer">
   <div>
     <p><strong>Fiction.</strong> The Realm of Coinor, its travellers and every episode are works of fiction that use public market data as story material. Nothing here is financial advice, a recommendation, or an offer. Markets are risky; do your own research.</p>

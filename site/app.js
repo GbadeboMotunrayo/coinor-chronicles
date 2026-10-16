@@ -315,7 +315,6 @@
     show([el('h1', { text: 'That path is not on the map' }), el('p', {}, [el('a', { href: '#/', text: 'Back to the chronicle' })])], 'Not found', 'home');
   }
 
-  embers();
   if (preview) document.getElementById('preview-banner').hidden = false;
   var FEED_URL = 'https://coinor.2-24-128-252.sslip.io/feed/episodes.json';
   var CACHE_KEY = 'coinor_feed_v1';
